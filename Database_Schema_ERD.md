@@ -24,7 +24,7 @@ Total: **21 tabel** (16 domain + 5 tabel Spatie Permission).
 ---
 
 ## 2. ERD (Mermaid)
-
+cek selengkapnya: https://viewer.diagrams.net/?tags=%7B%7D&lightbox=1&highlight=0000ff&edit=_blank&layers=1&nav=1&dark=auto#G1ljq2XECNP__6EX9HUtFkxcs7uj9k2AvD
 ```mermaid
 erDiagram
     %% ============ AUTH & USERS (Spatie Permission polymorphic) ============
