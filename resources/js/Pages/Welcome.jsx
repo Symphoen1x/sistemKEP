@@ -16,8 +16,13 @@ export default function Welcome({ auth }) {
     
     useEffect(() => {
         // Init theme from OS or localStorage
-        if (window.matchMedia && document.documentElement.classList.contains('dark')) {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
             setIsDarkMode(true);
+            document.documentElement.classList.add('dark');
+        } else if (savedTheme === 'light') {
+            setIsDarkMode(false);
+            document.documentElement.classList.remove('dark');
         } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
             setIsDarkMode(true);
             document.documentElement.classList.add('dark');
@@ -25,8 +30,15 @@ export default function Welcome({ auth }) {
     }, []);
 
     const toggleTheme = () => {
-        setIsDarkMode(!isDarkMode);
-        document.documentElement.classList.toggle('dark');
+        const newMode = !isDarkMode;
+        setIsDarkMode(newMode);
+        if (newMode) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
     };
 
     const handleSvgHover = () => {
@@ -147,7 +159,7 @@ export default function Welcome({ auth }) {
             <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300 font-sans text-slate-800 dark:text-slate-200">
                 
                 {/* --- NAVBAR --- */}
-                <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700">
+                <header className="sticky top-0 z-50 bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-md">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <ShieldCheck className="w-8 h-8 text-indigo-700 dark:text-indigo-400" />
