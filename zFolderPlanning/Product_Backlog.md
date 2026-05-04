@@ -5,6 +5,22 @@
 
 ---
 
+## Epic 0: Fondasi Teknis (Technical Foundation)
+
+> Enabler stories untuk menyiapkan fondasi sebelum fitur fungsional dibangun. Dikerjakan di Sprint 1.
+
+| ID | Epic/Modul | User Story | Deskripsi | Prioritas | Story Point | Acceptance Criteria |
+|----|-----------|------------|-----------|-----------|-------------|---------------------|
+| PBF01 | Fondasi - Database | Sebagai **Developer**, saya ingin memiliki skema database dan migrasi Laravel lengkap agar seluruh entitas sistem KEP terdokumentasi dan bisa dibangun di atas struktur yang konsisten. | Rancang ERD (referensi: `zFolderPlanning/Database_Schema_ERD.md`), buat migration Laravel untuk 16 tabel domain: users (+ `active_role_name`, `deleted_at`), proposals (+ `deleted_at`), proposal_documents, reviewer_assignments, reviewer_feedbacks, decisions, certificates, amendments, amendment_documents, terminations, termination_documents, templates, notifications, audit_logs, system_configs, email_templates. 5 tabel authorization dari Spatie Permission ditangani PBF04. Definisikan Eloquent model + relasi, trait `SoftDeletes` pada User & Proposal. | High | 8 | - ERD final tersedia (mermaid) dan ter-commit di repo. - Migration Laravel dibuat untuk 16 tabel domain dengan FK, index, constraint sesuai. - Soft delete aktif di User & Proposal (trait `SoftDeletes` + kolom `deleted_at`). - `php artisan migrate:fresh` berjalan tanpa error. - Relasi Eloquent (hasMany, belongsTo, morphTo untuk audit_logs) terdefinisi di model. - Naming convention Laravel (snake_case, plural tabel) konsisten. |
+| PBF02 | Fondasi - Seeder | Sebagai **Admin**, saya ingin database memiliki data awal (roles, akun Admin default, konfigurasi sistem, template email) agar sistem bisa langsung dipakai setelah deployment. | Database seeder: 5 roles standar (Applicant, Reviewer, Sekretariat, Ketua Komisi Etik, Admin), akun Admin default (kredensial via .env), konfigurasi default (min reviewer Expedited=3, Full Board=5), template email default per event. | High | 3 | - Seeder menghasilkan 5 roles dengan slug unik. - Akun Admin default ter-seed dengan password dari .env (tidak hardcoded). - `system_configs` ter-seed dengan parameter default. - `email_templates` ter-seed per event (registrasi, keputusan, dll). - `php artisan db:seed` berjalan idempoten tanpa error. |
+| PBF03 | Fondasi - Auth Middleware | Sebagai **Developer**, saya ingin middleware otentikasi Laravel siap agar hanya user terautentikasi yang bisa mengakses halaman protected. | Konfigurasi Laravel auth (session guard), middleware `auth`, `verified`, login throttling, password hashing (bcrypt), CSRF protection default. | High | 3 | - Middleware `auth` diterapkan pada semua route protected via route group. - User belum login di-redirect ke halaman login. - Login throttling aktif (max 5 attempts per menit via RateLimiter). - Session secure, httpOnly, sameSite. - Password di-hash bcrypt. |
+| PBF04 | Fondasi - Role & Authorization | Sebagai **Developer**, saya ingin Spatie Laravel Permission terinstall dan Policies/Gates siap agar setiap role hanya bisa mengakses fitur yang diizinkan sesuai matriks hak akses. | Install **Spatie Laravel Permission v7** (`composer require spatie/laravel-permission`), publish migrasi + config, daftarkan middleware alias `role`, `permission`, `role_or_permission` di `bootstrap/app.php`, tambah trait `HasRoles` ke User model, buat Laravel Policies/Gates untuk Proposal, ReviewerAssignment, Decision, Certificate, Amendment, Termination, User, Template. Kolom `users.active_role_name` untuk role switcher (PB05). Referensi langkah detail: `zFolderPlanning/Database_Schema_ERD.md` section 6. | High | 5 | - Spatie Permission terinstall, 5 tabel Spatie ter-migrate. - Middleware alias (`role`, `permission`, `role_or_permission`) terdaftar di `bootstrap/app.php`. - Trait `HasRoles` ter-apply di User model. - Unauthorized access menghasilkan 403 (Inertia error page). - Policy/Gate terdefinisi untuk 8 resource utama. - Kolom `active_role_name` di-update saat login/switch role. - Unit test untuk tiap policy pass. |
+| PBF05 | Fondasi - File Storage | Sebagai **Developer**, saya ingin konfigurasi file storage siap agar upload dokumen ajuan, revisi, surat, dan template tersimpan dengan aman, terorganisir, dan ter-versioning. | Konfigurasi Laravel storage (disk `documents` private), struktur folder per nomor protokol, naming convention, versioning otomatis, validasi tipe (PDF/DOCX) & ukuran file, signed URL untuk download. | High | 5 | - Disk `documents` terdaftar di config/filesystems.php (driver local/S3). - Struktur folder: `proposals/{protocol_number}/{document_type}/v{version}/{filename}`. - FormRequest/rule validation file (mime: pdf,docx; max size configurable). - File hanya bisa diakses via signed route (bukan public URL). - Versioning otomatis: upload revisi tidak menimpa versi lama. |
+| PBF06 | Fondasi - Inertia Shared Data | Sebagai **Developer**, saya ingin middleware Inertia share data global (auth, roles, flash, notifications count) agar frontend React bisa akses data kontekstual di setiap halaman tanpa fetch manual. | HandleInertiaRequests middleware: share `auth.user`, `auth.roles`, `auth.active_role`, `flash` (success/error), `notifications_count`, `app_config` (nama institusi, logo). | High | 3 | - Middleware HandleInertiaRequests terkonfigurasi di bootstrap/app.php. - Props global: `auth.user`, `auth.roles`, `auth.active_role`, `flash`, `notifications_count`. - Flash message `success`/`error` tampil otomatis di frontend via toast component. - Typescript type definition (`PageProps`) sinkron dengan shared data. |
+| PBF07 | Fondasi - Error Handling & Logging | Sebagai **pengguna**, saya ingin halaman error yang rapi (404, 403, 419, 500) agar saya tidak bingung saat terjadi kesalahan, dan sebagai **Developer**, saya ingin error tercatat di log untuk debugging. | Inertia error pages custom (404, 403, 419, 500), exception handler bootstrap, logging ke `storage/logs` + opsi Sentry/LogRocket, tidak ada stack trace bocor di production. | Medium | 3 | - Halaman error custom: 404, 403, 419, 500 konsisten dengan design sistem. - Error page menggunakan komponen Inertia (bukan blade default). - Error tersimpan di `storage/logs/laravel.log` dengan level sesuai. - `APP_DEBUG=false` di production tidak menampilkan stack trace ke user. - Handler untuk validation exception mengembalikan response Inertia yang proper. |
+
+---
+
 ## Epic 1: Autentikasi & Registrasi
 
 | ID | Epic/Modul | User Story | Deskripsi | Prioritas | Story Point | Acceptance Criteria |
@@ -172,6 +188,7 @@
 
 | Epic | Jumlah Item | Total Story Points | Prioritas Dominan |
 |------|:-----------:|:-------------------:|:-----------------:|
+| 0. Fondasi Teknis | 7 | 30 | High |
 | 1. Autentikasi & Registrasi | 7 | 25 | High |
 | 2. Manajemen Pengguna (Admin) | 4 | 15 | High-Medium |
 | 3. Dashboard | 5 | 23 | High-Medium |
@@ -187,4 +204,4 @@
 | 13. Laporan & Statistik | 3 | 13 | Low |
 | 14. Audit Log | 1 | 5 | Low |
 | 15. Penyimpanan Dokumen | 1 | 8 | High |
-| **TOTAL** | **58** | **249** | |
+| **TOTAL** | **65** | **279** | |
