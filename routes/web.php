@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\ProtokolController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -15,6 +16,13 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+// web.php
+Route::get('/dashboard', function () {
+    return Inertia::render('Dashboard', [
+        'dataProtokol' => \App\Models\Protokol::all(), // Pastikan key-nya 'dataProtokol'
+    ]);
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -46,5 +54,19 @@ Route::middleware('auth')->group(function () {
         // Route khusus Admin
     });
 });
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Halaman daftar protokol
+    Route::get('/protokol', [ProtokolController::class, 'index'])->name('protokol.index');
+
+    // Endpoint untuk update status (dipanggil saat dropdown berubah)
+    Route::patch('/protokol/{id}/status', [ProtokolController::class, 'updateStatus'])->name('protokol.updateStatus');
+});
+
+Route::get('/dashboard', function () {
+    return Inertia::render('Dashboard', [
+        'dataProtokol' => \App\Models\Protokol::all(),
+    ]);
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 require __DIR__.'/auth.php';
