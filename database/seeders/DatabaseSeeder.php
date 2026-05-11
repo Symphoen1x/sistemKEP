@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // 2. Buat Akun Admin Default
-        // Menggunakan kredensial dari .env agar tidak hardcoded. 
+        // Menggunakan kredensial dari .env agar tidak hardcoded.
         // Jika belum diset di .env, akan fallback ke nilai default yang aman untuk testing awal.
         $adminEmail = env('ADMIN_DEFAULT_EMAIL', 'admin@example.com');
         $adminPassword = env('ADMIN_DEFAULT_PASSWORD', 'admin12345');
@@ -47,6 +47,8 @@ class DatabaseSeeder extends Seeder
         if (!$admin->hasRole('Admin')) {
             $admin->assignRole('Admin');
         }
-        
+
     }
 }
+
+
