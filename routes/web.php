@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Auth\RoleSelectionController;
+use App\Http\Controllers\UserApprovalController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -29,6 +31,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::get('/role/select', [RoleSelectionController::class, 'create'])->name('role.select');
+    Route::post('/role/select', [RoleSelectionController::class, 'store'])->name('role.select.store');
+
     // Route Group untuk Role: Applicant
     Route::middleware('role:Applicant')->prefix('applicant')->name('applicant.')->group(function () {
         // Route khusus Applicant
@@ -41,7 +46,9 @@ Route::middleware('auth')->group(function () {
 
     // Route Group untuk Role: Sekretariat
     Route::middleware('role:Sekretariat')->prefix('sekretariat')->name('sekretariat.')->group(function () {
-        // Route khusus Sekretariat
+        Route::get('/pending-users', [UserApprovalController::class, 'index'])->name('users.pending');
+        Route::post('/users/{user}/approve', [UserApprovalController::class, 'approve'])->name('users.approve');
+        Route::post('/users/{user}/reject', [UserApprovalController::class, 'reject'])->name('users.reject');
     });
 
     // Route Group untuk Role: Ketua Komisi Etik
