@@ -62,8 +62,33 @@ class AuthenticatedSessionController extends Controller
             $user->update(['active_role_name' => $roles->first()->name]);
         }
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended($this->roleBasedRedirect($user));
     }
+
+    /**
+     * Determine the redirect URL based on the user's active role.
+     *
+     * [Tim B - Isa] Role yang sudah punya halaman diaktifkan di sini.
+     * [Tim A - Olga & Fajar] Saat dashboard per role di Epic 3 selesai,
+     * uncomment baris yang sesuai dan isi nama route-nya, lalu kabarin Isa!
+     */
+    private function roleBasedRedirect($user): string
+    {
+        return match ($user->active_role_name) {
+            // ── Tim B (Isa) — Sudah aktif ──────────────────────────────────
+            'Admin'             => route('admin.users.index', absolute: false),
+            'Sekretariat'       => route('sekretariat.users.pending', absolute: false),
+
+            // ── Tim A (Olga & Fajar) — Uncomment saat Epic 3 selesai ───────
+            // 'Applicant'         => route('applicant.dashboard', absolute: false),
+            // 'Reviewer'          => route('reviewer.dashboard', absolute: false),
+            // 'Ketua Komisi Etik' => route('ketua.dashboard', absolute: false),
+
+            // ── Fallback: ke /dashboard (placeholder Epic 3) ────────────────
+            default             => route('dashboard', absolute: false),
+        };
+    }
+
 
     /**
      * Destroy an authenticated session.

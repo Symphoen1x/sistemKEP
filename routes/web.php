@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\RoleSelectionController;
 use App\Http\Controllers\UserApprovalController;
+use App\Http\Controllers\Admin\UserManagementController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -50,7 +51,16 @@ Route::middleware('auth')->group(function () {
 
     // Route Group untuk Role: Admin
     Route::middleware('role:Admin')->prefix('admin')->name('admin.')->group(function () {
-        // Route khusus Admin
+        // PB08: Daftar semua user
+        // PB09: Buat akun internal
+        // PB10: Kelola role user
+        // PB11: Toggle status aktif/nonaktif
+        Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
+        Route::get('/users/create', [UserManagementController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
+        Route::get('/users/{user}', [UserManagementController::class, 'show'])->name('users.show');
+        Route::patch('/users/{user}/roles', [UserManagementController::class, 'updateRoles'])->name('users.roles');
+        Route::patch('/users/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('users.toggle-status');
     });
 });
 
