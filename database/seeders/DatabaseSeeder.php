@@ -37,11 +37,17 @@ class DatabaseSeeder extends Seeder
         $admin = User::firstOrCreate(
             ['email' => $adminEmail],
             [
-                'name' => 'System Admin',
-                'password' => Hash::make($adminPassword),
-                'active_role_name' => 'Admin'
+                'name'             => 'System Admin',
+                'password'         => Hash::make($adminPassword),
+                'active_role_name' => 'Admin',
+                'status'           => 'active', // Admin langsung aktif
             ]
         );
+
+        // Pastikan Admin yang sudah ada juga berstatus active
+        if ($admin->status !== 'active') {
+            $admin->update(['status' => 'active']);
+        }
 
         // Assign role Admin ke akun tersebut
         if (!$admin->hasRole('Admin')) {
