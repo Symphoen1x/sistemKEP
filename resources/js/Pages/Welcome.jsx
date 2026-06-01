@@ -153,7 +153,7 @@ export default function Welcome({ auth }) {
 
     return (
         <>
-            <Head title="Sistem KEP | Komisi Etik Penelitian" />
+            <Head title="Komisi Etik Penelitian" />
             
             {/* Wrapper utama dengan transisi dark mode */}
             <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300 font-sans text-slate-800 dark:text-slate-200">
