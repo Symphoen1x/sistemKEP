@@ -21,6 +21,9 @@ Route::get('/', function () {
 // Role-based dashboard redirection
 Route::get('/dashboard', function () {
     $user = auth()->user();
+    if ($user->hasRole('Admin')) {
+        return redirect()->route('admin.users.index');
+    }
     if ($user->hasRole('Sekretariat')) {
         return redirect()->route('sekretariat.dashboard');
     }
@@ -29,6 +32,10 @@ Route::get('/dashboard', function () {
     }
     return redirect()->route('profile.edit');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/admin', function () {
+    return redirect()->route('admin.users.index');
+})->middleware(['auth', 'role:Admin']);
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
