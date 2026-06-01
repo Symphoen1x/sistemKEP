@@ -10,6 +10,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ProtokolController;
+use App\Http\Controllers\ReviewerController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -26,6 +27,9 @@ Route::get('/dashboard', function () {
     }
     if ($user->hasRole('Sekretariat')) {
         return redirect()->route('sekretariat.dashboard');
+    }
+    if ($user->hasRole('Reviewer')) {
+        return redirect()->route('reviewer.dashboard');
     }
     if ($user->hasRole('Applicant')) {
         return redirect()->route('applicant.dashboard');
@@ -104,6 +108,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/users/{user}', [UserManagementController::class, 'show'])->name('users.show');
         Route::patch('/users/{user}/roles', [UserManagementController::class, 'updateRoles'])->name('users.roles');
         Route::patch('/users/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('users.toggle-status');
+    });
+
+    // Route Group untuk Role: Reviewer
+    Route::middleware('role:Reviewer')->prefix('reviewer')->name('reviewer.')->group(function () {
+        Route::get('/dashboard', [ReviewerController::class, 'dashboard'])->name('dashboard');
+        Route::get('/proposals', [ReviewerController::class, 'proposals'])->name('proposals');
+        Route::get('/proposals/{id}/review', [ReviewerController::class, 'review'])->name('review');
+        Route::post('/proposals/{id}/review', [ReviewerController::class, 'storeReview'])->name('review.store');
+        Route::get('/history', [ReviewerController::class, 'history'])->name('history');
+        Route::get('/schedules', [ReviewerController::class, 'schedules'])->name('schedules');
+        Route::get('/profil', [ReviewerController::class, 'profile'])->name('profil');
+        Route::post('/profil', [ReviewerController::class, 'updateProfile'])->name('profil.update');
     });
 });
 

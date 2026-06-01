@@ -91,6 +91,34 @@ export default function Sidebar() {
                     route: 'sekretariat.profil',
                 }
             ];
+        } else if (activeRole === 'Reviewer') {
+            return [
+                {
+                    label: 'Dashboard',
+                    icon: LayoutDashboard,
+                    route: 'reviewer.dashboard',
+                },
+                {
+                    label: 'Daftar Proposal',
+                    icon: FileText,
+                    route: 'reviewer.proposals',
+                },
+                {
+                    label: 'Riwayat Review',
+                    icon: History,
+                    route: 'reviewer.history',
+                },
+                {
+                    label: 'Jadwal Review',
+                    icon: Calendar,
+                    route: 'reviewer.schedules',
+                },
+                {
+                    label: 'Profil Akun',
+                    icon: User,
+                    route: 'reviewer.profil',
+                }
+            ];
         } else {
             // Default to Applicant (Peneliti)
             return [
