@@ -27,6 +27,9 @@ class User extends Authenticatable
         'status',
         'phone_number',
         'address',
+        'institution',
+        'role_type',
+        'nidn_nim',
     ];
 
     /**

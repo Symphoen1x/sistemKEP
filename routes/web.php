@@ -4,6 +4,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\RoleSelectionController;
 use App\Http\Controllers\UserApprovalController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\ApplicantController;
+use App\Http\Controllers\SekretariatController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -16,16 +18,17 @@ Route::get('/', function () {
     ]);
 });
 
+// Role-based dashboard redirection
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+    $user = auth()->user();
+    if ($user->hasRole('Sekretariat')) {
+        return redirect()->route('sekretariat.dashboard');
+    }
+    if ($user->hasRole('Applicant')) {
+        return redirect()->route('applicant.dashboard');
+    }
+    return redirect()->route('profile.edit');
 })->middleware(['auth', 'verified'])->name('dashboard');
-
-// web.php
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard', [
-        'dataProtokol' => \App\Models\Protokol::all(), // Pastikan key-nya 'dataProtokol'
-    ]);
-});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -35,34 +38,59 @@ Route::middleware('auth')->group(function () {
     Route::get('/role/select', [RoleSelectionController::class, 'create'])->name('role.select');
     Route::post('/role/select', [RoleSelectionController::class, 'store'])->name('role.select.store');
 
-    // Route Group untuk Role: Applicant
+    // Route Group untuk Role: Applicant (Peneliti)
     Route::middleware('role:Applicant')->prefix('applicant')->name('applicant.')->group(function () {
-        // Route khusus Applicant
-    });
-
-    // Route Group untuk Role: Reviewer
-    Route::middleware('role:Reviewer')->prefix('reviewer')->name('reviewer.')->group(function () {
-        // Route khusus Reviewer
+        Route::get('/dashboard', [ApplicantController::class, 'dashboard'])->name('dashboard');
+        Route::get('/pengajuan', [ApplicantController::class, 'pengajuan'])->name('pengajuan');
+        Route::post('/pengajuan', [ApplicantController::class, 'storePengajuan'])->name('pengajuan.store');
+        Route::get('/riwayat', [ApplicantController::class, 'riwayat'])->name('riwayat');
+        Route::get('/dokumen', [ApplicantController::class, 'dokumen'])->name('dokumen');
+        Route::get('/pesan', [ApplicantController::class, 'pesan'])->name('pesan');
+        Route::get('/profil', [ApplicantController::class, 'profil'])->name('profil');
+        Route::post('/profil', [ApplicantController::class, 'updateProfil'])->name('profil.update');
+        Route::get('/bantuan', [ApplicantController::class, 'bantuan'])->name('bantuan');
     });
 
     // Route Group untuk Role: Sekretariat
     Route::middleware('role:Sekretariat')->prefix('sekretariat')->name('sekretariat.')->group(function () {
+        Route::get('/dashboard', [SekretariatController::class, 'dashboard'])->name('dashboard');
+        
+        // Verifikasi & Kelola pendaftaran akun
         Route::get('/pending-users', [UserApprovalController::class, 'index'])->name('users.pending');
         Route::post('/users/{user}/approve', [UserApprovalController::class, 'approve'])->name('users.approve');
         Route::post('/users/{user}/reject', [UserApprovalController::class, 'reject'])->name('users.reject');
-    });
-
-    // Route Group untuk Role: Ketua Komisi Etik
-    Route::middleware('role:Ketua Komisi Etik')->prefix('ketua')->name('ketua.')->group(function () {
-        // Route khusus Ketua Komisi Etik
+        
+        // Verifikasi Usulan Protokol
+        Route::get('/verifikasi', [SekretariatController::class, 'verifikasi'])->name('verifikasi');
+        Route::post('/verifikasi/{id}/aksi', [SekretariatController::class, 'verifikasiAksi'])->name('verifikasi.aksi');
+        
+        // Dokumen & Unduhan
+        Route::get('/dokumen', [SekretariatController::class, 'dokumen'])->name('dokumen');
+        
+        // Penunjukan Reviewer
+        Route::get('/reviewer', [SekretariatController::class, 'reviewer'])->name('reviewer');
+        Route::post('/reviewer/{id}/assign', [SekretariatController::class, 'assignReviewer'])->name('reviewer.assign');
+        
+        // Jadwal Rapat
+        Route::get('/rapat', [SekretariatController::class, 'rapat'])->name('rapat');
+        Route::post('/rapat', [SekretariatController::class, 'storeRapat'])->name('rapat.store');
+        Route::patch('/rapat/{id}', [SekretariatController::class, 'updateRapat'])->name('rapat.update');
+        Route::delete('/rapat/{id}', [SekretariatController::class, 'destroyRapat'])->name('rapat.destroy');
+        
+        // Nomor Surat & SK & Sertifikat
+        Route::get('/surat', [SekretariatController::class, 'surat'])->name('surat');
+        Route::post('/surat/{id}/nomor', [SekretariatController::class, 'generateNomorSurat'])->name('surat.nomor');
+        Route::post('/surat/{id}/sk', [SekretariatController::class, 'uploadSK'])->name('surat.sk');
+        Route::post('/surat/{id}/sertifikat', [SekretariatController::class, 'generateSertifikat'])->name('surat.sertifikat');
+        
+        // Laporan & Profil
+        Route::get('/laporan', [SekretariatController::class, 'laporan'])->name('laporan');
+        Route::get('/profil', [SekretariatController::class, 'profil'])->name('profil');
+        Route::post('/profil', [SekretariatController::class, 'updateProfil'])->name('profil.update');
     });
 
     // Route Group untuk Role: Admin
     Route::middleware('role:Admin')->prefix('admin')->name('admin.')->group(function () {
-        // PB08: Daftar semua user
-        // PB09: Buat akun internal
-        // PB10: Kelola role user
-        // PB11: Toggle status aktif/nonaktif
         Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
         Route::get('/users/create', [UserManagementController::class, 'create'])->name('users.create');
         Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
@@ -73,17 +101,8 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Halaman daftar protokol
     Route::get('/protokol', [ProtokolController::class, 'index'])->name('protokol.index');
-
-    // Endpoint untuk update status (dipanggil saat dropdown berubah)
     Route::patch('/protokol/{id}/status', [ProtokolController::class, 'updateStatus'])->name('protokol.updateStatus');
 });
-
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard', [
-        'dataProtokol' => \App\Models\Protokol::all(),
-    ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
 
 require __DIR__.'/auth.php';

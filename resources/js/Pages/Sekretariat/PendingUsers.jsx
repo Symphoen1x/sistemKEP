@@ -1,17 +1,17 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
-import PrimaryButton from '@/Components/PrimaryButton';
-import { Check, X, User } from 'lucide-react';
+import Sidebar from '@/Components/Sidebar';
+import { Check, X, User, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useState } from 'react';
 
-export default function PendingUsers({ pendingUsers }) {
+export default function PendingUsers({ pendingUsers = [] }) {
     const [processingId, setProcessingId] = useState(null);
 
     const handleApprove = (userId, role) => {
         if (!confirm(`Setujui pengguna ini sebagai ${role}?`)) return;
         setProcessingId(userId);
         router.post(route('sekretariat.users.approve', userId), { role }, {
-            onFinish: () => setProcessingId(null)
+            onFinish: () => setProcessingId(null),
+            onSuccess: () => alert('Pengguna berhasil disetujui.')
         });
     };
 
@@ -19,92 +19,107 @@ export default function PendingUsers({ pendingUsers }) {
         if (!confirm('Tolak pendaftaran akun ini?')) return;
         setProcessingId(userId);
         router.post(route('sekretariat.users.reject', userId), {}, {
-            onFinish: () => setProcessingId(null)
+            onFinish: () => setProcessingId(null),
+            onSuccess: () => alert('Pengguna berhasil ditolak.')
         });
     };
 
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                    Verifikasi Pendaftar Baru
-                </h2>
-            }
-        >
-            <Head title="Verifikasi Pengguna" />
+        <div className="flex min-h-screen bg-gray-50 text-gray-800">
+            <Sidebar />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
-                        <div className="p-6 text-gray-900 dark:text-gray-100">
-                            
-                            {pendingUsers.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <User className="mx-auto h-12 w-12 text-gray-400" />
-                                    <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">Tidak Ada Pendaftar</h3>
-                                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Saat ini tidak ada antrian pendaftar yang perlu diverifikasi.</p>
-                                </div>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm text-left">
-                                        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                                            <tr>
-                                                <th scope="col" className="px-6 py-3">Nama Lengkap</th>
-                                                <th scope="col" className="px-6 py-3">Email</th>
-                                                <th scope="col" className="px-6 py-3">Telepon</th>
-                                                <th scope="col" className="px-6 py-3">Waktu Daftar</th>
-                                                <th scope="col" className="px-6 py-3">Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {pendingUsers.map((user) => (
-                                                <tr key={user.id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                                                        {user.name}
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        {user.email}
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        {user.phone_number || '-'}
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        {new Date(user.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                                    </td>
-                                                    <td className="px-6 py-4 flex gap-2">
+            <div className="flex-1 ml-64 min-h-screen flex flex-col">
+                <Head title="Verifikasi Pendaftaran Pengguna Baru" />
+
+                <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-30">
+                    <div className="flex flex-col">
+                        <h2 className="text-xl font-bold text-gray-900">Verifikasi Pendaftar Baru</h2>
+                        <p className="text-xs text-gray-500 font-medium">Verifikasi dan tentukan hak akses (Role) bagi akun terdaftar baru</p>
+                    </div>
+                </header>
+
+                <div className="flex-1 p-8 max-w-7xl w-full mx-auto space-y-6">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 font-bold text-gray-900">
+                            Antrian Persetujuan Akun
+                        </div>
+                        <div className="overflow-x-auto text-xs font-semibold">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
+                                    <tr>
+                                        <th scope="col" className="px-6 py-4">Nama Lengkap</th>
+                                        <th scope="col" className="px-6 py-4">Email</th>
+                                        <th scope="col" className="px-6 py-4">Telepon</th>
+                                        <th scope="col" className="px-6 py-4">Waktu Daftar</th>
+                                        <th scope="col" className="px-6 py-4 text-center">Tindakan Persetujuan</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 font-medium">
+                                    {pendingUsers.length > 0 ? (
+                                        pendingUsers.map((user) => (
+                                            <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-6 py-4 font-bold text-gray-900">
+                                                    {user.name}
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-600">
+                                                    {user.email}
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-500">
+                                                    {user.phone_number || '-'}
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-500">
+                                                    {new Date(user.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <div className="inline-flex gap-2 text-xs font-bold justify-center">
                                                         <button 
+                                                            type="button"
                                                             onClick={() => handleApprove(user.id, 'Applicant')}
                                                             disabled={processingId === user.id}
-                                                            className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-300 disabled:opacity-50"
+                                                            className="flex items-center gap-1 px-3 py-1.5 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all shadow-sm shadow-blue-500/10 disabled:opacity-50"
                                                         >
-                                                            <Check className="w-4 h-4" /> Applicant
+                                                            <Check className="w-3.5 h-3.5" />
+                                                            <span>Setujui Peneliti</span>
                                                         </button>
                                                         <button 
+                                                            type="button"
                                                             onClick={() => handleApprove(user.id, 'Reviewer')}
                                                             disabled={processingId === user.id}
-                                                            className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-300 disabled:opacity-50"
+                                                            className="flex items-center gap-1 px-3 py-1.5 text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-all shadow-sm shadow-purple-500/10 disabled:opacity-50"
                                                         >
-                                                            <Check className="w-4 h-4" /> Reviewer
+                                                            <Check className="w-3.5 h-3.5" />
+                                                            <span>Setujui Reviewer</span>
                                                         </button>
                                                         <button 
+                                                            type="button"
                                                             onClick={() => handleReject(user.id)}
                                                             disabled={processingId === user.id}
-                                                            className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-300 disabled:opacity-50"
+                                                            className="flex items-center gap-1 px-3 py-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200/50 transition-all disabled:opacity-50"
                                                         >
-                                                            <X className="w-4 h-4" /> Tolak
+                                                            <X className="w-3.5 h-3.5" />
+                                                            <span>Tolak</span>
                                                         </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="5" className="px-6 py-12 text-center text-gray-500 font-medium">
+                                                <div className="flex flex-col items-center justify-center space-y-2">
+                                                    <User className="w-8 h-8 text-gray-300" />
+                                                    <p className="font-bold text-gray-900 text-sm">Tidak Ada Antrian</p>
+                                                    <p className="text-xs text-gray-400">Saat ini tidak ada pendaftar baru yang menunggu persetujuan.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </div>
     );
 }
