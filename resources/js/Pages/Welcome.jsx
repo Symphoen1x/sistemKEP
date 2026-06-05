@@ -661,7 +661,7 @@ export default function Welcome({ auth }) {
                         {/* Pintu Gerbang */}
                         <div
                             ref={gateDoorRef}
-                            className="absolute w-72 h-96 sm:w-80 sm:h-[420px] bg-slate-100 border-4 border-slate-900/40 rounded-t-xl shadow-2xl flex flex-col items-center justify-start p-4 bg-cover bg-blend-multiply will-change-transform z-0 gate-fade-in opacity-0"
+                            className="absolute w-72 h-96 sm:w-80 sm:h-[420px] bg-blue-200 border-4 border-slate-900/40 rounded-t-xl shadow-2xl flex flex-col items-center justify-start p-4 bg-cover bg-blend-multiply will-change-transform z-0 gate-fade-in opacity-0"
                             style={{
                                 backgroundImage: `url('https://images.unsplash.com/photo-1700581182740-dd9d3ad180cc?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')`,
                                 boxShadow: '0 0 80px rgba(0,0,0,0.8) inset'
@@ -680,7 +680,7 @@ export default function Welcome({ auth }) {
 
                             <button
                                 onClick={handleEnterPortal}
-                                className="mt-24 px-8 py-4 bg-slate-955/90 hover:bg-white hover:text-black text-white border border-white/30 rounded font-serif tracking-widest text-xs uppercase transition-all duration-300 shadow-2xl backdrop-blur-sm flex items-center gap-3 group"
+                                className="mt-24 px-8 py-4 bg-slate-955/90 hover:bg-white hover:text-black text-white border border-white/30 rounded font-serif tracking-widest text-xs drop-shadow-lg uppercase transition-all duration-300 shadow-2xl backdrop-blur-sm flex items-center gap-3 group"
                             >
                                 JELAJAHI KODE ETIK
                             </button>
