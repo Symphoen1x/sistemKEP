@@ -355,7 +355,6 @@ export default function Welcome({ auth }) {
         };
     }, [showLandingGate, isDarkMode]);
 
-    // 4. Tombol "Masuk Pintu" Diklik (Transisi Sinematik Menembus Portal)
     const handleEnterPortal = () => {
         if (isEnteringRef.current) return;
         isEnteringRef.current = true;
@@ -363,12 +362,10 @@ export default function Welcome({ auth }) {
         const gateTimeline = anime.timeline({
             complete: () => {
                 setShowLandingGate(false);
-                document.body.style.overflow = 'unset'; // Aktifkan scroll kembali
+                document.body.style.overflow = 'unset';
 
-                // Triger animasi halaman utama bawaan setelah masuk pintu
                 triggerMainHeroAnimation();
 
-                // Smooth scroll ke landing page
                 setTimeout(() => {
                     window.scrollTo({
                         top: 0,
@@ -379,7 +376,6 @@ export default function Welcome({ auth }) {
         });
 
         gateTimeline
-        // Konten teks membesar dan memudar dramatis
         .add({
             targets: gateContentRef.current,
             opacity: 0,
@@ -387,7 +383,6 @@ export default function Welcome({ auth }) {
             duration: 800,
             easing: 'easeInQuad'
         })
-        // Efek kamera maju menembus pintu (Pintu membesar raksasa seolah dilewati)
         .add({
             targets: gateDoorRef.current,
             scale: 4,
@@ -395,7 +390,6 @@ export default function Welcome({ auth }) {
             duration: 1200,
             easing: 'easeInOutExpo'
         }, '-=400')
-        // Layar gerbang menutup secara transparan penuh
         .add({
             targets: landingGateRef.current,
             opacity: 0,
@@ -404,12 +398,11 @@ export default function Welcome({ auth }) {
         }, '-=600');
     };
 
-    // 4.5. Efek Scroll / Swipe untuk Masuk Portal
     useEffect(() => {
         if (!showLandingGate) return;
 
         const handleGateWheel = (e) => {
-            if (e.deltaY > 10) { // User scrolled down
+            if (e.deltaY > 10) {
                 handleEnterPortal();
             }
         };
@@ -421,7 +414,7 @@ export default function Welcome({ auth }) {
 
         const handleTouchMove = (e) => {
             const touchEndY = e.touches[0].clientY;
-            if (touchStartY - touchEndY > 30) { // Swiped up (scrolled down)
+            if (touchStartY - touchEndY > 30) {
                 handleEnterPortal();
             }
         };
@@ -601,7 +594,7 @@ export default function Welcome({ auth }) {
                     ref={landingGateRef}
                     className="fixed inset-0 z-[100] flex flex-col justify-between items-center bg-cover bg-center select-none"
                     style={{
-                        backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=80')`
+                        backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('https://images.unsplash.com/photo-1648291881755-f984c18e16cb?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')`
                     }}
                 >
                     {/* Header Atas Gerbang */}
@@ -668,14 +661,14 @@ export default function Welcome({ auth }) {
                         {/* Pintu Gerbang */}
                         <div
                             ref={gateDoorRef}
-                            className="absolute w-72 h-96 sm:w-80 sm:h-[420px] bg-slate-900/90 border-4 border-blue-900/40 rounded-t-xl shadow-2xl flex flex-col items-center justify-start p-4 bg-cover bg-blend-multiply will-change-transform z-0 gate-fade-in opacity-0"
+                            className="absolute w-72 h-96 sm:w-80 sm:h-[420px] bg-slate-100 border-4 border-slate-900/40 rounded-t-xl shadow-2xl flex flex-col items-center justify-start p-4 bg-cover bg-blend-multiply will-change-transform z-0 gate-fade-in opacity-0"
                             style={{
-                                backgroundImage: `url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80')`,
+                                backgroundImage: `url('https://images.unsplash.com/photo-1700581182740-dd9d3ad180cc?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')`,
                                 boxShadow: '0 0 80px rgba(0,0,0,0.8) inset'
                             }}
                         >
                             <div className="border border-blue-500/20 px-3 py-1 rounded text-[10px] tracking-widest text-blue-200/80 uppercase font-mono mt-6 bg-black/40">
-                                PORTAL / KEP
+                                Go To Menu
                             </div>
                         </div>
 
@@ -687,7 +680,7 @@ export default function Welcome({ auth }) {
 
                             <button
                                 onClick={handleEnterPortal}
-                                className="mt-24 px-8 py-4 bg-slate-955/90 hover:bg-white hover:text-slate-955 text-white border border-white/30 rounded font-serif tracking-widest text-xs uppercase transition-all duration-300 shadow-2xl backdrop-blur-sm flex items-center gap-3 group"
+                                className="mt-24 px-8 py-4 bg-slate-955/90 hover:bg-white hover:text-black text-white border border-white/30 rounded font-serif tracking-widest text-xs uppercase transition-all duration-300 shadow-2xl backdrop-blur-sm flex items-center gap-3 group"
                             >
                                 JELAJAHI KODE ETIK
                             </button>
@@ -777,7 +770,7 @@ export default function Welcome({ auth }) {
                         <div ref={parallaxContentRef} className="lg:col-span-7 flex flex-col items-start text-left transition-transform duration-75 will-change-transform">
                             <h1 className="hero-element opacity-0 text-5xl sm:text-6xl lg:text-[76px] font-black tracking-tight text-slate-900 dark:text-white leading-[1.05] mb-6">
                                 Start Your <br/>
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 dark:from-blue-400 dark:to-sky-300">Research</span>
+                                <span className="text-transparent bg-clip-text bg-blue-600 dark:bg-blue-400">Research</span>
                             </h1>
                             <p className="hero-element opacity-0 text-slate-600 dark:text-slate-400 text-lg sm:text-xl font-light leading-relaxed max-w-xl mb-12">
                                 Kami membantu akademisi dan praktisi mempercepat penelaahan etik proposal riset melalui platform digital yang aman, transparan, dan berstandar internasional.
