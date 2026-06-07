@@ -583,7 +583,7 @@ export default function Welcome({ auth }) {
                 style={{ clipPath: 'circle(100% at 50% 50%)' }}
             >
                 <div className="flex flex-col items-center gap-2">
-                    <ShieldCheck className="w-12 h-12 text-blue-400 animate-pulse" />
+                    <img src="images/KEP.png" alt="Logo KEP" className="w-16 h-16 rounded-full animate-pulse" />
                     <span className="text-xs font-mono tracking-widest uppercase opacity-60">Initializing Portal...</span>
                 </div>
             </div>
@@ -651,7 +651,10 @@ export default function Welcome({ auth }) {
                                 </div>
                             )}
                         </div>
-                        <div className="text-lg font-black tracking-widest font-black text-white uppercase">KODE ETIK PENELITIAN</div>
+                        <div className="flex items-center gap-3 cursor-pointer">
+                            <img src="images/KEP.png" alt="Logo KEP" className="w-8 h-8 rounded-full" />
+                            <span className="text-sm font-black tracking-[0.3em] uppercase text-slate-900 dark:text-white">XYNORA</span>
+                        </div>
                         <div className="text-xs border-b border-white/40 pb-0.5 cursor-pointer hover:text-white transition">AKTUALITAS ◆</div>
                     </div>
 
@@ -667,14 +670,14 @@ export default function Welcome({ auth }) {
                                 boxShadow: '0 0 80px rgba(0,0,0,0.8) inset'
                             }}
                         >
-                            <div className="border border-blue-500/20 px-3 py-1 rounded text-[10px] tracking-widest text-blue-200/80 uppercase font-mono mt-6 bg-black/40">
+                            <div className="border border-blue-500/20 px-3 py-1 rounded text-[10px] tracking-widest text-blue-200/80 uppercase font-mono mt-4 bg-black/40">
                                 Go To Menu
                             </div>
                         </div>
 
                         {/* Konten Teks & Tombol utama */}
                         <div ref={gateContentRef} className="relative z-10 flex flex-col items-center gate-fade-in opacity-0 will-change-transform">
-                            <h1 className="text-4xl sm:text-6xl font-black tracking-widest text-white uppercase font-serif drop-shadow-lg mb-6 selection:bg-blue-500">
+                            <h1 className="text-4xl sm:text-7xl font-black tracking-widest text-white uppercase drop-shadow-lg mb-6 selection:bg-blue-500">
                                 WELCOME REASERCHERS
                             </h1>
 
@@ -707,7 +710,7 @@ export default function Welcome({ auth }) {
                         {/* Logo */}
                         <div className="flex items-center gap-3 cursor-pointer">
                             <img src="images/KEP.png" alt="Logo KEP" className="w-8 h-8 rounded-full" />
-                            <span className="text-sm font-black tracking-[0.3em] uppercase text-slate-900 dark:text-white">SISTEM KEP</span>
+                            <span className="text-sm font-black tracking-[0.3em] uppercase text-slate-900 dark:text-white">XYNORA</span>
                         </div>
 
                         {/* Navigation Links (torii.studio style with smooth scroll) */}
@@ -948,28 +951,43 @@ export default function Welcome({ auth }) {
 
                 {/* --- DOWNLOAD TEMPLATE HUB --- */}
                 <section id="download" className="py-32 px-4 sm:px-8 lg:px-16 max-w-7xl mx-auto">
-                    <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-950 border border-slate-200 dark:border-white/15 rounded-3xl p-8 sm:p-16 text-center relative overflow-hidden shadow-sm dark:shadow-none scroll-animate transform transition duration-700 ease-out opacity-0 translate-y-10">
-                        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-blue-600/10 blur-3xl"></div>
-                        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-sky-500/10 blur-3xl"></div>
+                <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-950 border border-slate-200 dark:border-white/15 rounded-3xl p-8 sm:p-16 text-center relative overflow-hidden shadow-sm dark:shadow-none scroll-animate transform transition duration-700 ease-out opacity-0 translate-y-10">
+                    <div className="relative z-10 max-w-2xl mx-auto">
+                        <span className="font-mono text-[10px] font-black tracking-[0.35em] text-blue-600 dark:text-blue-500 block mb-3">
+                            PUSAT UNDUHAN
+                        </span>
 
-                        <div className="relative z-10 max-w-2xl mx-auto">
-                            <span className="font-mono text-[10px] font-black tracking-[0.35em] text-blue-600 dark:text-blue-500 block mb-3">PUSAT UNDUHAN</span>
-                            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-4">Template Berkas Administrasi</h2>
-                            <p className="mb-10 text-slate-600 dark:text-slate-400 font-light leading-relaxed">
-                                Persiapkan berkas kelengkapan protokol riset Anda sebelum mendaftar agar mempercepat proses review oleh komite kami.
-                            </p>
+                        <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-4">
+                            Template Berkas Administrasi
+                        </h2>
 
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                <button className="px-8 py-4 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded font-semibold transition flex items-center justify-center gap-2 shadow-sm">
-                                    <FileText className="w-5 h-5 text-blue-600"/> Ringkasan Protokol
-                                </button>
-                                <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition flex items-center justify-center gap-2 shadow-lg">
-                                    <FileText className="w-5 h-5 text-white"/> Formulir Pengajuan
-                                </button>
-                            </div>
+                        <p className="mb-10 text-slate-600 dark:text-slate-400 font-light leading-relaxed">
+                            Persiapkan berkas kelengkapan protokol riset Anda sebelum
+                            mendaftar agar mempercepat proses review oleh komite kami.
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <a
+                                href="/documents/ringkasan-protokol.docx"
+                                download
+                                className="px-8 py-4 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded font-semibold transition flex items-center justify-center gap-2 shadow-sm"
+                            >
+                                <FileText className="w-5 h-5 text-blue-600" />
+                                Ringkasan Protokol
+                            </a>
+
+                            <a
+                                href="/documents/formulir-pengajuan.docx"
+                                download
+                                className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition flex items-center justify-center gap-2 shadow-lg"
+                            >
+                                <FileText className="w-5 h-5 text-white" />
+                                Formulir Pengajuan
+                            </a>
                         </div>
                     </div>
-                </section>
+                </div>
+            </section>
 
                 {/* --- FOOTER GET IN TOUCH (TORII STUDIO EMAIL/PHONE LAYOUT) --- */}
                 <footer id="kontak" className="bg-slate-100 dark:bg-slate-950 border-t border-slate-200 dark:border-white/5 py-24 px-4 sm:px-8 lg:px-16">
@@ -985,11 +1003,11 @@ export default function Welcome({ auth }) {
 
                             {/* Contact Links */}
                             <div className="space-y-4">
-                                <a href="mailto:kep@institusi.ac.id" className="block text-2xl sm:text-3xl font-black text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition tracking-tight">
-                                    kep@institusi.ac.id
+                                <a href="mailto:@institusi.ac.id" className="block text-2xl sm:text-3xl font-black text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition tracking-tight">
+                                    xynoraethic@institusi.ac.id
                                 </a>
                                 <a href="tel:0211234567" className="block text-xl font-bold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition font-mono">
-                                    (021) 1234567
+                                    (081) 328947127
                                 </a>
                             </div>
                         </div>
