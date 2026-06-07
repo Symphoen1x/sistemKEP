@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import { 
     Clock, 
@@ -10,7 +10,8 @@ import {
     FileText 
 } from 'lucide-react';
 
-export default function Dashboard({ auth, stats, recentProposals = [] }) {
+export default function Dashboard({ stats, recentProposals = [] }) {
+    const { auth } = usePage().props;
     const user = auth.user;
 
     return (

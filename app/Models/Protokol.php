@@ -46,4 +46,14 @@ class Protokol extends Model
     {
         return $this->belongsTo(User::class, 'reviewer_id');
     }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function decision()
+    {
+        return $this->hasOne(Decision::class);
+    }
 }

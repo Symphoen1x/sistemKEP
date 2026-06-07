@@ -15,7 +15,8 @@ import {
     Award,
     TrendingUp,
     ShieldCheck,
-    UserPlus
+    UserPlus,
+    CheckSquare
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -64,6 +65,11 @@ export default function Sidebar() {
                     label: 'Penugasan Reviewer',
                     icon: ShieldCheck,
                     route: 'sekretariat.reviewer',
+                },
+                {
+                    label: 'Pengambilan Keputusan',
+                    icon: CheckSquare,
+                    route: 'sekretariat.pengambilanKeputusan',
                 },
                 {
                     label: 'Jadwal Rapat',
@@ -125,6 +131,11 @@ export default function Sidebar() {
                     label: 'Dashboard',
                     icon: LayoutDashboard,
                     route: 'ketua.dashboard',
+                },
+                {
+                    label: 'Pengambilan Keputusan',
+                    icon: CheckSquare,
+                    route: 'ketua.pengambilanKeputusan',
                 },
                 {
                     label: 'Profil Akun',

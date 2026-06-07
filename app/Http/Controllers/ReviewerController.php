@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Protokol;
+use App\Models\Review;
 use App\Models\JadwalRapat;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -16,53 +17,118 @@ class ReviewerController extends Controller
     {
         $user = Auth::user();
         
-        $myProposals = Protokol::where('reviewer_id', $user->id)->get();
+        $myReviews = Review::where('reviewer_id', $user->id)->get();
+        $assignedProposals = $myReviews->where('status', 'Assigned')->count();
+        $completedReviews = $myReviews->where('status', 'Completed')->count();
         
         $stats = [
-            'waiting' => $myProposals->where('status', 'Direview')->count(),
-            'reviewed' => $myProposals->whereIn('status', ['Disetujui', 'Ditolak', 'Revisi'])->count(),
+            'waiting' => $assignedProposals,
+            'reviewed' => $completedReviews,
             'deadline' => Carbon::now()->addDays(7)->translatedFormat('d F Y'),
-            'new_tasks' => $myProposals->where('status', 'Direview')->count(),
+            'new_tasks' => $assignedProposals,
         ];
+
+        $recentReviews = Review::where('reviewer_id', $user->id)
+            ->where('status', 'Assigned')
+            ->with('protokol')
+            ->take(5)
+            ->get();
 
         return Inertia::render('Reviewer/Dashboard', [
             'stats' => $stats,
-            'recentProposals' => $myProposals->where('status', 'Direview')->take(5)->values(),
+            'recentProposals' => $recentReviews,
+        ]);
+    }
+
+    public function getAssignedProposals()
+    {
+        $user = Auth::user();
+        $reviews = Review::where('reviewer_id', $user->id)
+            ->where('status', 'Assigned')
+            ->with('protokol')
+            ->orderBy('assigned_at', 'desc')
+            ->get();
+
+        return Inertia::render('Reviewer/DaftarProposal', [
+            'reviews' => $reviews,
         ]);
     }
 
     public function proposals()
     {
-        $user = Auth::user();
-        $proposals = Protokol::where('reviewer_id', $user->id)
-            ->where('status', 'Direview')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        return $this->getAssignedProposals();
+    }
 
-        return Inertia::render('Reviewer/DaftarProposal', [
-            'proposals' => $proposals,
+    public function viewProposal($id)
+    {
+        $protocol = Protokol::findOrFail($id);
+        return response()->json($protocol);
+    }
+
+    public function showReviewForm($id)
+    {
+        $review = Review::findOrFail($id);
+        $user = Auth::user();
+
+        if ($review->reviewer_id !== $user->id) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        return Inertia::render('Reviewer/FormReview', [
+            'review' => $review,
+            'proposal' => $review->protokol,
         ]);
     }
 
     public function review($id)
     {
-        $proposal = Protokol::findOrFail($id);
+        $review = Review::where('protokol_id', $id)
+            ->where('reviewer_id', Auth::id())
+            ->firstOrFail();
         
-        // Ensure reviewer owns this assignment
-        if ($proposal->reviewer_id !== Auth::id()) {
+        return Inertia::render('Reviewer/ReviewProposal', [
+            'proposal' => $review->protokol,
+            'review' => $review,
+        ]);
+    }
+
+    public function submitReview(Request $request, $id)
+    {
+        $review = Review::findOrFail($id);
+        $user = Auth::user();
+        
+        if ($review->reviewer_id !== $user->id) {
             abort(403, 'Unauthorized access.');
         }
 
-        return Inertia::render('Reviewer/ReviewProposal', [
-            'proposal' => $proposal,
+        $request->validate([
+            'feedback' => 'required|string|min:10',
+            'recommendation' => 'required|in:Approved,Conditionally Approved,Rejected',
         ]);
+
+        $review->update([
+            'feedback' => $request->feedback,
+            'recommendation' => $request->recommendation,
+            'status' => 'Completed',
+            'submitted_at' => Carbon::now(),
+        ]);
+
+        // Check if all reviews for this proposal are completed
+        $proposal = $review->protokol;
+        $allReviewsCompleted = $proposal->reviews()->where('status', '!=', 'Completed')->count() === 0;
+        
+        if ($allReviewsCompleted) {
+            $proposal->update(['review_status' => 'Completed']);
+        }
+
+        return redirect()->route('reviewer.history')->with('status', 'Review berhasil disimpan.');
     }
 
     public function storeReview(Request $request, $id)
     {
-        $proposal = Protokol::findOrFail($id);
+        $protocol = Protokol::findOrFail($id);
         
-        if ($proposal->reviewer_id !== Auth::id()) {
+        if ($protocol->reviewer_id !== Auth::id()) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -71,28 +137,34 @@ class ReviewerController extends Controller
             'notes' => 'required|string|min:5',
         ]);
 
-        $proposal->status = $request->decision;
+        $protocol->status = $request->decision;
         if ($request->decision === 'Revisi') {
-            $proposal->catatan_revisi = $request->notes;
+            $protocol->catatan_revisi = $request->notes;
         } else {
-            $proposal->catatan_revisi = null;
+            $protocol->catatan_revisi = null;
         }
-        $proposal->save();
+        $protocol->save();
 
         return redirect()->route('reviewer.proposals')->with('status', 'Hasil penelaahan kelayakan etik berhasil disimpan.');
     }
 
-    public function history()
+    public function getHistory()
     {
         $user = Auth::user();
-        $proposals = Protokol::where('reviewer_id', $user->id)
-            ->whereIn('status', ['Disetujui', 'Ditolak', 'Revisi'])
-            ->orderBy('updated_at', 'desc')
+        $reviews = Review::where('reviewer_id', $user->id)
+            ->where('status', 'Completed')
+            ->with('protokol')
+            ->orderBy('submitted_at', 'desc')
             ->get();
 
         return Inertia::render('Reviewer/RiwayatReview', [
-            'proposals' => $proposals,
+            'reviews' => $reviews,
         ]);
+    }
+
+    public function history()
+    {
+        return $this->getHistory();
     }
 
     public function schedules()

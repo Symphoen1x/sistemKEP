@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Protokol;
+use App\Models\Review;
+use App\Models\Decision;
 use App\Models\JadwalRapat;
 use App\Models\Pengumuman;
 use App\Models\Message;
@@ -350,5 +352,188 @@ class SekretariatController extends Controller
         ]));
 
         return back()->with('status', 'Profil berhasil diperbarui.');
+    }
+
+    // EPIC 5 - Evaluasi & Routing Dokumen
+    public function evaluateProposal($id)
+    {
+        $proposal = Protokol::findOrFail($id);
+        $reviewers = User::role('Reviewer')->get();
+
+        return Inertia::render('Sekretariat/EvaluasiProposal', [
+            'proposal' => $proposal,
+            'reviewers' => $reviewers,
+        ]);
+    }
+
+    public function classifyReview(Request $request, $id)
+    {
+        $request->validate([
+            'review_type' => 'required|in:Exempted,Expedited,Full Board',
+            'due_date' => 'required|date|after:today',
+        ]);
+
+        $proposal = Protokol::findOrFail($id);
+        $proposal->update([
+            'review_type' => $request->review_type,
+            'review_status' => 'Classified',
+            'due_date' => $request->due_date,
+        ]);
+
+        return back()->with('status', 'Proposal berhasil diklasifikasikan.');
+    }
+
+    public function assignReviewers(Request $request, $id)
+    {
+        $request->validate([
+            'reviewer_ids' => 'required|array|min:1',
+            'reviewer_ids.*' => 'exists:users,id',
+        ]);
+
+        $proposal = Protokol::findOrFail($id);
+        
+        foreach ($request->reviewer_ids as $reviewer_id) {
+            $reviewer = User::findOrFail($reviewer_id);
+            
+            Review::create([
+                'protokol_id' => $proposal->id,
+                'reviewer_id' => $reviewer_id,
+                'status' => 'Assigned',
+                'assigned_at' => Carbon::now(),
+            ]);
+
+            Message::create([
+                'user_id' => $reviewer_id,
+                'sender_name' => 'Sekretariat Komisi Etik',
+                'subject' => "Proposal Baru Ditugaskan: {$proposal->nomor_pengajuan}",
+                'body' => "Proposal etika dengan judul \"{$proposal->judul}\" telah ditugaskan untuk review Anda.",
+            ]);
+        }
+
+        $proposal->update(['review_status' => 'Assigned']);
+
+        return back()->with('status', 'Reviewer berhasil ditugaskan.');
+    }
+
+    public function setDueDate(Request $request, $id)
+    {
+        $request->validate([
+            'due_date' => 'required|date|after:today',
+        ]);
+
+        $proposal = Protokol::findOrFail($id);
+        $proposal->update(['due_date' => $request->due_date]);
+
+        return back()->with('status', 'Tenggat waktu berhasil diperbarui.');
+    }
+
+    // EPIC 7 - Keputusan & Post-Decision
+    public function getProposalsForDecision()
+    {
+        $proposals = Protokol::where('review_status', 'Completed')
+            ->whereDoesntHave('decision')
+            ->with('reviews')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return Inertia::render('Sekretariat/PengambilanKeputusan', [
+            'proposals' => $proposals,
+        ]);
+    }
+
+    public function showDecisionForm($id)
+    {
+        $proposal = Protokol::with('reviews')->findOrFail($id);
+        $reviews = $proposal->reviews;
+
+        return Inertia::render('Sekretariat/FormKeputusan', [
+            'proposal' => $proposal,
+            'reviews' => $reviews,
+        ]);
+    }
+
+    public function makeDecision(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:Approved,Rejected',
+            'notes' => 'nullable|string',
+        ]);
+
+        $proposal = Protokol::findOrFail($id);
+        $user = Auth::user();
+
+        $certificate_number = null;
+        if ($request->status === 'Approved') {
+            $certificate_number = 'SERTIF-' . Carbon::now()->year . '-' . str_pad(
+                Decision::where('status', 'Approved')->count() + 1,
+                4,
+                '0',
+                STR_PAD_LEFT
+            );
+        }
+
+        Decision::create([
+            'protokol_id' => $proposal->id,
+            'decided_by' => $user->id,
+            'status' => $request->status === 'Approved' ? 'Approved' : 'Rejected',
+            'notes' => $request->notes,
+            'certificate_number' => $certificate_number,
+            'decided_at' => Carbon::now(),
+        ]);
+
+        $proposal->update(['status' => $request->status === 'Approved' ? 'Disetujui' : 'Ditolak']);
+
+        Message::create([
+            'user_id' => $proposal->user_id,
+            'sender_name' => 'Komisi Etik',
+            'subject' => $request->status === 'Approved' 
+                ? "Proposal Disetujui: {$proposal->nomor_pengajuan}"
+                : "Proposal Ditolak: {$proposal->nomor_pengajuan}",
+            'body' => $request->status === 'Approved'
+                ? "Proposal Anda telah disetujui dengan nomor sertifikat: {$certificate_number}"
+                : "Proposal Anda telah ditolak. Catatan: " . ($request->notes ?? 'Tidak ada catatan'),
+        ]);
+
+        return back()->with('status', 'Keputusan berhasil disimpan.');
+    }
+
+    public function generateCertificate($id)
+    {
+        $decision = Decision::where('protokol_id', $id)
+            ->where('status', 'Approved')
+            ->firstOrFail();
+
+        $proposal = $decision->protokol;
+
+        // Generate certificate path
+        $certificate_path = '/storage/sertifikat/' . $decision->certificate_number . '.pdf';
+        
+        $decision->update(['letter_path' => $certificate_path]);
+        $proposal->update(['sertifikat_path' => $certificate_path]);
+
+        return back()->with('status', 'Sertifikat berhasil dibuat.');
+    }
+
+    public function sendNotification($id)
+    {
+        $proposal = Protokol::findOrFail($id);
+        $decision = $proposal->decision;
+
+        if (!$decision) {
+            return back()->with('error', 'Keputusan tidak ditemukan.');
+        }
+
+        Message::create([
+            'user_id' => $proposal->user_id,
+            'sender_name' => 'Komisi Etik',
+            'subject' => $decision->status === 'Approved'
+                ? "Sertifikat Ethical Clearance Diterbitkan"
+                : "Notifikasi Keputusan Proposal",
+            'body' => $decision->status === 'Approved'
+                ? "Selamat! Sertifikat Ethical Clearance Anda telah diterbitkan dengan nomor {$decision->certificate_number}."
+                : "Mohon maaf, proposal Anda telah ditolak.",
+        ]);
+
+        return back()->with('status', 'Notifikasi berhasil dikirim.');
     }
 }

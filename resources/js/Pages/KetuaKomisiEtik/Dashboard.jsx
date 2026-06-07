@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import { 
     Layers, 
@@ -13,7 +13,8 @@ import {
     BarChart3
 } from 'lucide-react';
 
-export default function Dashboard({ auth, stats, recentProposals = [], activities = [], schedules = [] }) {
+export default function Dashboard({ stats, recentProposals = [], activities = [], schedules = [] }) {
+    const { auth } = usePage().props;
     const user = auth.user;
 
     return (
@@ -199,10 +200,16 @@ export default function Dashboard({ auth, stats, recentProposals = [], activitie
                                 <h3 className="font-bold text-gray-900 text-sm">Menu Cepat</h3>
                                 <div className="space-y-2">
                                     <Link 
+                                        href={route('ketua.pengambilanKeputusan')}
+                                        className="w-full block px-4 py-2.5 bg-green-50 hover:bg-green-100 text-green-700 text-xs font-bold rounded-xl border border-green-200 transition-colors"
+                                    >
+                                        📋 Pengambilan Keputusan
+                                    </Link>
+                                    <Link 
                                         href={route('ketua.profil')}
                                         className="w-full block px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 transition-colors"
                                     >
-                                        Profil Saya
+                                        👤 Profil Saya
                                     </Link>
                                 </div>
                             </div>

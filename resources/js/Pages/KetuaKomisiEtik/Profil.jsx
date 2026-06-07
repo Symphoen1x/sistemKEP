@@ -1,9 +1,10 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import { User, Mail, Phone, MapPin, Building2 } from 'lucide-react';
 import { useState } from 'react';
 
-export default function Profil({ auth, user }) {
+export default function Profil({ user }) {
+    const { auth } = usePage().props;
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         name: user.name,

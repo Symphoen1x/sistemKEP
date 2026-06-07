@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import { 
     Layers, 
@@ -13,7 +13,8 @@ import {
     ThumbsDown
 } from 'lucide-react';
 
-export default function SekreDashboard({ auth, stats, activities = [], schedules = [], pendingUsers = [] }) {
+export default function SekreDashboard({ stats, activities = [], schedules = [], pendingUsers = [] }) {
+    const { auth } = usePage().props;
     const user = auth.user;
 
     const handleUserApprove = (userId) => {

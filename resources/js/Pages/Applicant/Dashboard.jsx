@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import { 
     FileText, 
@@ -12,7 +12,8 @@ import {
     User
 } from 'lucide-react';
 
-export default function Dashboard({ auth, stats, recentProposals = [], revisions = [], schedules = [], announcements = [] }) {
+export default function Dashboard({ stats, recentProposals = [], revisions = [], schedules = [], announcements = [] }) {
+    const { auth } = usePage().props;
     const user = auth.user;
 
     const getStatusBadge = (status) => {

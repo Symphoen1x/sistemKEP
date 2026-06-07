@@ -55,27 +55,92 @@ class ApplicantController extends Controller
         return Inertia::render('Applicant/PengajuanPenelitian');
     }
 
-    public function storePengajuan(Request $request)
+    public function submitProposal()
+    {
+        return Inertia::render('Applicant/PengajuanEC');
+    }
+
+    public function storeProposal(Request $request)
     {
         $request->validate([
-            // Step 1
             'nama' => 'required|string',
             'nidn_nim' => 'required|string',
             'email' => 'required|email',
             'no_hp' => 'required|string',
             'institusi' => 'required|string',
             'role_peneliti' => 'required|string',
-            // Step 2
             'judul' => 'required|string',
             'lokasi_penelitian' => 'required|string',
             'anggota_tim' => 'nullable|string',
             'subjek_penelitian' => 'required|string',
-            // Step 3
             'metode_penelitian' => 'required|string',
             'risiko_penelitian' => 'required|string',
             'deskripsi_penelitian' => 'required|string',
+            'proposal' => 'required|file|mimes:pdf,doc,docx|max:10240',
+            'informed_consent' => 'required|file|mimes:pdf,doc,docx|max:10240',
+            'surat_izin' => 'required|file|mimes:pdf,doc,docx|max:10240',
+            'instrumen' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+            'sertifikat' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
+        $user = Auth::user();
+
+        // Generate nomor pengajuan
+        $count = Protokol::count() + 1;
+        $nomor_pengajuan = 'KEP-' . Carbon::now()->year . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+
+        // File upload
+        $proposal_path = $request->file('proposal')->store('uploads/proposals', 'public');
+        $informed_consent_path = $request->file('informed_consent')->store('uploads/informed_consent', 'public');
+        $surat_izin_path = $request->file('surat_izin')->store('uploads/surat_izin', 'public');
+        $instrumen_path = $request->hasFile('instrumen') ? $request->file('instrumen')->store('uploads/instrumen', 'public') : null;
+        $sertifikat_path = $request->hasFile('sertifikat') ? $request->file('sertifikat')->store('uploads/sertifikat', 'public') : null;
+
+        Protokol::create([
+            'user_id' => $user->id,
+            'judul' => $request->judul,
+            'peneliti' => $request->nama,
+            'nidn_nim' => $request->nidn_nim,
+            'email' => $request->email,
+            'no_hp' => $request->no_hp,
+            'institusi' => $request->institusi,
+            'role_peneliti' => $request->role_peneliti,
+            'lokasi_penelitian' => $request->lokasi_penelitian,
+            'anggota_tim' => $request->anggota_tim,
+            'subjek_penelitian' => $request->subjek_penelitian,
+            'metode_penelitian' => $request->metode_penelitian,
+            'risiko_penelitian' => $request->risiko_penelitian,
+            'deskripsi_penelitian' => $request->deskripsi_penelitian,
+            'proposal_path' => $proposal_path,
+            'informed_consent_path' => $informed_consent_path,
+            'surat_izin_path' => $surat_izin_path,
+            'instrumen_path' => $instrumen_path,
+            'sertifikat_path' => $sertifikat_path,
+            'nomor_pengajuan' => $nomor_pengajuan,
+            'status' => 'Pending',
+            'review_status' => 'Pending',
+        ]);
+
+        return redirect()->route('applicant.trackStatus')->with('status', 'Proposal Ethical Clearance berhasil diajukan!');
+    }
+
+    public function downloadTemplate()
+    {
+        return response()->download(storage_path('app/public/templates/template_proposal.docx'));
+    }
+
+    public function trackStatus()
+    {
+        $user = Auth::user();
+        $proposals = Protokol::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
+        
+        return Inertia::render('Applicant/TrackStatus', [
+            'proposals' => $proposals,
+        ]);
+    }
+
+    public function storePengajuan(Request $request)
+    {
         $user = Auth::user();
 
         // Generate nomor pengajuan

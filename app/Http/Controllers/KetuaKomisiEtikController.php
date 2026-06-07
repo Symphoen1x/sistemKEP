@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Protokol;
+use App\Models\Decision;
 use App\Models\JadwalRapat;
+use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -79,7 +81,7 @@ class KetuaKomisiEtikController extends Controller
             }
         }
 
-        return Inertia::render('Ketua/Dashboard', [
+        return Inertia::render('KetuaKomisiEtik/Dashboard', [
             'stats' => $stats,
             'recentProposals' => $recentProposals,
             'activities' => $activities,
@@ -90,7 +92,7 @@ class KetuaKomisiEtikController extends Controller
     public function profil()
     {
         $user = Auth::user();
-        return Inertia::render('Ketua/Profil', [
+        return Inertia::render('KetuaKomisiEtik/Profil', [
             'user' => $user,
         ]);
     }
@@ -109,5 +111,75 @@ class KetuaKomisiEtikController extends Controller
         $user->update($request->only('name', 'phone_number', 'address', 'institution'));
 
         return redirect()->route('ketua.profil')->with('success', 'Profil berhasil diperbarui');
+    }
+
+    // Decision methods for EPIC 7
+    public function getProposalsForDecision()
+    {
+        $proposals = Protokol::where('review_status', 'Completed')
+            ->whereDoesntHave('decision')
+            ->with('reviews')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return Inertia::render('KetuaKomisiEtik/PengambilanKeputusan', [
+            'proposals' => $proposals,
+        ]);
+    }
+
+    public function showDecisionForm($id)
+    {
+        $proposal = Protokol::with('reviews')->findOrFail($id);
+        $reviews = $proposal->reviews;
+
+        return Inertia::render('KetuaKomisiEtik/FormKeputusan', [
+            'proposal' => $proposal,
+            'reviews' => $reviews,
+        ]);
+    }
+
+    public function makeDecision(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:Approved,Rejected',
+            'notes' => 'nullable|string',
+        ]);
+
+        $proposal = Protokol::findOrFail($id);
+        $user = Auth::user();
+
+        $certificate_number = null;
+        if ($request->status === 'Approved') {
+            $certificate_number = 'SERTIF-' . Carbon::now()->year . '-' . str_pad(
+                Decision::where('status', 'Approved')->count() + 1,
+                4,
+                '0',
+                STR_PAD_LEFT
+            );
+        }
+
+        Decision::create([
+            'protokol_id' => $proposal->id,
+            'decided_by' => $user->id,
+            'status' => $request->status === 'Approved' ? 'Approved' : 'Rejected',
+            'notes' => $request->notes,
+            'certificate_number' => $certificate_number,
+            'decided_at' => Carbon::now(),
+        ]);
+
+        $proposal->update(['status' => $request->status === 'Approved' ? 'Disetujui' : 'Ditolak']);
+
+        Message::create([
+            'user_id' => $proposal->user_id,
+            'sender_name' => 'Komisi Etik',
+            'subject' => $request->status === 'Approved' 
+                ? "Proposal Disetujui: {$proposal->nomor_pengajuan}"
+                : "Proposal Ditolak: {$proposal->nomor_pengajuan}",
+            'body' => $request->status === 'Approved'
+                ? "Proposal Anda telah disetujui dengan nomor sertifikat: {$certificate_number}"
+                : "Proposal Anda telah ditolak. Catatan: " . ($request->notes ?? 'Tidak ada catatan'),
+        ]);
+
+        return back()->with('status', 'Keputusan berhasil disimpan.');
     }
 }
