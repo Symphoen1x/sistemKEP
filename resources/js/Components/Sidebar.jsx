@@ -119,6 +119,19 @@ export default function Sidebar() {
                     route: 'reviewer.profil',
                 }
             ];
+        } else if (activeRole === 'Ketua Komisi Etik') {
+            return [
+                {
+                    label: 'Dashboard',
+                    icon: LayoutDashboard,
+                    route: 'ketua.dashboard',
+                },
+                {
+                    label: 'Profil Akun',
+                    icon: User,
+                    route: 'ketua.profil',
+                }
+            ];
         } else {
             // Default to Applicant (Peneliti)
             return [

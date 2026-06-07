@@ -81,8 +81,8 @@ class AuthenticatedSessionController extends Controller
             'Applicant'         => route('applicant.dashboard', absolute: false),
 
             // ── Tim A (Olga & Fajar) — Uncomment saat Epic 3 selesai ───────
-            // 'Reviewer'          => route('reviewer.dashboard', absolute: false),
-            // 'Ketua Komisi Etik' => route('ketua.dashboard', absolute: false),
+            'Reviewer'          => route('reviewer.dashboard', absolute: false),
+            'Ketua Komisi Etik' => route('ketua.dashboard', absolute: false),
 
             // ── Fallback: ke /dashboard (placeholder Epic 3) ────────────────
             default             => route('dashboard', absolute: false),

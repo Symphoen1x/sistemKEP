@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ProtokolController;
 use App\Http\Controllers\ReviewerController;
+use App\Http\Controllers\KetuaKomisiEtikController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -30,6 +31,9 @@ Route::get('/dashboard', function () {
     }
     if ($user->hasRole('Reviewer')) {
         return redirect()->route('reviewer.dashboard');
+    }
+    if ($user->hasRole('Ketua Komisi Etik')) {
+        return redirect()->route('ketua.dashboard');
     }
     if ($user->hasRole('Applicant')) {
         return redirect()->route('applicant.dashboard');
@@ -120,6 +124,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/schedules', [ReviewerController::class, 'schedules'])->name('schedules');
         Route::get('/profil', [ReviewerController::class, 'profile'])->name('profil');
         Route::post('/profil', [ReviewerController::class, 'updateProfile'])->name('profil.update');
+    });
+
+    // Route Group untuk Role: Ketua Komisi Etik
+    Route::middleware('role:Ketua Komisi Etik')->prefix('ketua')->name('ketua.')->group(function () {
+        Route::get('/dashboard', [KetuaKomisiEtikController::class, 'dashboard'])->name('dashboard');
+        Route::get('/profil', [KetuaKomisiEtikController::class, 'profil'])->name('profil');
+        Route::post('/profil', [KetuaKomisiEtikController::class, 'updateProfil'])->name('profil.update');
     });
 });
 
