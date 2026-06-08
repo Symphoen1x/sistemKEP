@@ -935,7 +935,7 @@ export default function Welcome({ auth }) {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             {[
                                 { step: '01', title: 'Registrasi & Akun', desc: 'Peneliti mendaftarkan akun dan memverifikasi institusi asal secara online.' },
-                                { step: '02', title: 'Unggah Protokol', desc: 'Mengisi form protokol riset digital dan mengunggah dokumen informed consent.' },
+                                { step: '02', title: 'Unggah Proposal', desc: 'Mengisi form protokol riset digital dan mengunggah dokumen informed consent.' },
                                 { step: '03', title: 'Evaluasi Komite', desc: 'Proses penelaahan berkas oleh tim penelaah ahli secara transparan.' },
                                 { step: '04', title: 'Kelayakan Etik', desc: 'Penerbitan surat keterangan laik etik (Ethical Clearance) berformat digital.' }
                             ].map((item, idx) => (
