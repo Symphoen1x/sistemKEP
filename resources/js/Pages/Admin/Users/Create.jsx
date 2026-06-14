@@ -1,5 +1,5 @@
 import { useForm, Link, Head } from '@inertiajs/react';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import Sidebar from '@/Components/Sidebar';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
@@ -29,29 +29,29 @@ export default function Create() {
     ];
 
     return (
-        <AuthenticatedLayout
-            header={
-                <div className="flex items-center gap-3">
-                    <Link
-                        href={route('admin.users.index')}
-                        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                    >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                        </svg>
-                        Kembali
-                    </Link>
-                    <span className="text-gray-300 dark:text-gray-600">/</span>
-                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">
-                        Buat Akun Internal
-                    </h2>
-                </div>
-            }
-        >
-            <Head title="Buat Akun Internal — Admin" />
+        <div className="flex min-h-screen bg-gray-50 text-gray-800">
+            <Sidebar />
 
-            <div className="py-8">
-                <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
+            <div className="flex-1 ml-64 min-h-screen flex flex-col">
+                <Head title="Buat Akun Internal — Admin" />
+
+                <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-30">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href={route('admin.users.index')}
+                            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 font-bold"
+                        >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                            </svg>
+                            Kembali
+                        </Link>
+                        <span className="text-gray-300">/</span>
+                        <h2 className="text-xl font-bold text-gray-900">Buat Akun Internal</h2>
+                    </div>
+                </header>
+
+                <div className="flex-1 p-8 space-y-6 max-w-2xl w-full mx-auto">
                     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
 
                         {/* Header card */}
@@ -204,6 +204,6 @@ export default function Create() {
                     </div>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </div>
     );
 }

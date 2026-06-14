@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import Sidebar from '@/Components/Sidebar';
 import Badge, { statusVariant, roleVariant } from '@/Components/Badge';
 import ConfirmModal from '@/Components/ConfirmModal';
 
@@ -44,30 +44,29 @@ export default function Show({ user, availableRoles }) {
     };
 
     return (
-        <AuthenticatedLayout
-            header={
-                <div className="flex items-center gap-3">
-                    <Link
-                        href={route('admin.users.index')}
-                        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                    >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                        </svg>
-                        Manajemen Pengguna
-                    </Link>
-                    <span className="text-gray-300 dark:text-gray-600">/</span>
-                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">
-                        Detail Pengguna
-                    </h2>
-                </div>
-            }
-        >
-            <Head title={`${user.name} — Detail Pengguna`} />
+        <div className="flex min-h-screen bg-gray-50 text-gray-800">
+            <Sidebar />
 
-            <div className="py-8">
-                <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 space-y-5">
+            <div className="flex-1 ml-64 min-h-screen flex flex-col">
+                <Head title={`${user.name} — Detail Pengguna`} />
 
+                <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-30">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href={route('admin.users.index')}
+                            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 font-bold"
+                        >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                            </svg>
+                            Manajemen Pengguna
+                        </Link>
+                        <span className="text-gray-300">/</span>
+                        <h2 className="text-xl font-bold text-gray-900">Detail Pengguna</h2>
+                    </div>
+                </header>
+
+                <div className="flex-1 p-8 space-y-6 max-w-7xl w-full mx-auto">
                     {/* Flash messages */}
                     {flash?.success && (
                         <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
@@ -278,6 +277,6 @@ export default function Show({ user, availableRoles }) {
                 confirmLabel="Ya, Hapus Peran"
                 confirmVariant="danger"
             />
-        </AuthenticatedLayout>
+        </div>
     );
 }

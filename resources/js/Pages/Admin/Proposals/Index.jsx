@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import Sidebar from '@/Components/Sidebar';
 import { ClipboardList, UserCheck, Shield, BookOpen, AlertCircle } from 'lucide-react';
 
 export default function Index({ proposals, sekretariats }) {
@@ -28,22 +28,20 @@ export default function Index({ proposals, sekretariats }) {
     };
 
     return (
-        <AuthenticatedLayout
-            header={
-                <div>
-                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">
-                        Alur & Pengawasan Proposal
-                    </h2>
-                    <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                        Tugaskan anggota Sekretariat untuk mengawasi alur proposal masuk
-                    </p>
-                </div>
-            }
-        >
-            <Head title="Pengawasan Proposal — Admin" />
+        <div className="flex min-h-screen bg-gray-50 text-gray-800">
+            <Sidebar />
 
-            <div className="py-6">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex-1 ml-64 min-h-screen flex flex-col">
+                <Head title="Pengawasan Proposal — Admin" />
+
+                <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-30">
+                    <div className="flex flex-col">
+                        <h2 className="text-xl font-bold text-gray-900">Alur & Pengawasan Proposal</h2>
+                        <p className="text-xs text-gray-500 font-medium">Tugaskan anggota Sekretariat untuk mengawasi alur proposal masuk</p>
+                    </div>
+                </header>
+
+                <div className="flex-1 p-8 space-y-6 max-w-7xl w-full mx-auto">
                     
                     {/* Success/Error Alerts */}
                     {flash?.success && (
@@ -157,6 +155,6 @@ export default function Index({ proposals, sekretariats }) {
                     )}
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </div>
     );
 }
