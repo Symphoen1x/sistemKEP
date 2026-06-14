@@ -42,6 +42,11 @@ export default function Sidebar() {
                     label: 'Buat Akun Internal',
                     icon: UserPlus,
                     route: 'admin.users.create',
+                },
+                {
+                    label: 'Alur Proposal',
+                    icon: FileText,
+                    route: 'admin.proposals.index',
                 }
             ];
         } else if (activeRole === 'Sekretariat') {

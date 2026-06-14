@@ -96,6 +96,20 @@ class DatabaseSeeder extends Seeder
         );
         $reviewer2->assignRole('Reviewer');
 
+        $ketua = User::firstOrCreate(
+            ['email' => 'ketua@example.com'],
+            [
+                'name' => 'Prof. Dr. dr. Handoko, Sp.OT',
+                'password' => Hash::make('password'),
+                'active_role_name' => 'Ketua Komisi Etik',
+                'status' => 'active',
+                'phone_number' => '081234567811',
+                'address' => 'Gedung A Lt. 1, Kantor Komisi Etik',
+                'institution' => 'Komisi Etik Universitas',
+            ]
+        );
+        $ketua->assignRole('Ketua Komisi Etik');
+
         // Create a pending applicant for Sekretariat dashboard verification demo
         User::firstOrCreate(
             ['email' => 'pendaftar@example.com'],
@@ -116,6 +130,7 @@ class DatabaseSeeder extends Seeder
         Protokol::create([
             'user_id' => $peneliti->id,
             'reviewer_id' => $reviewer1->id,
+            'sekretariat_id' => $sekre->id,
             'nomor_pengajuan' => 'KEP-2026-0001',
             'judul' => 'Analisis Efektivitas Terapi Ekstrak Daun Kelor Terhadap Kadar Gula Darah Pasien Diabetes Tipe 2',
             'peneliti' => 'Dr. Andi Wijaya',
@@ -141,6 +156,7 @@ class DatabaseSeeder extends Seeder
         Protokol::create([
             'user_id' => $peneliti->id,
             'reviewer_id' => $reviewer2->id,
+            'sekretariat_id' => $sekre->id,
             'nomor_pengajuan' => 'KEP-2026-0002',
             'judul' => 'Uji Toksisitas Akut Formulasi Serum Anti-Aging Berbasis Kolagen Kulit Ikan Patin pada Mencit Putih',
             'peneliti' => 'Dr. Andi Wijaya',
@@ -154,7 +170,7 @@ class DatabaseSeeder extends Seeder
             'subjek_penelitian' => 'Hewan Coba (Mencit Balb/c)',
             'metode_penelitian' => 'Metode uji OECD 423 untuk penentuan tingkat toksisitas akut dermal.',
             'risiko_penelitian' => 'Sedang (potensi iritasi kulit mencit). Mitigasi: aplikasi dihentikan jika terjadi eritema parah.',
-            'deskripsi_penelitian' => 'Riset ini mengevaluasi keamanan sediaan kolagen kulit ikan patin lokal yang dirancang untuk produk kecantikan medis.',
+            'deskripsi_penelitian' => 'Riset ini mengevaluasi keamanan sediaan kolagen kulit ikan patin lokal yang dirancang untuk product kecantikan medis.',
             'proposal_path' => '/storage/uploads/proposal_toksisitas_patin.pdf',
             'informed_consent_path' => '/storage/uploads/consent_patin.pdf',
             'surat_izin_path' => '/storage/uploads/izin_lab_farmako.pdf',
@@ -163,6 +179,7 @@ class DatabaseSeeder extends Seeder
 
         Protokol::create([
             'user_id' => $peneliti->id,
+            'sekretariat_id' => $sekre->id,
             'nomor_pengajuan' => 'KEP-2026-0003',
             'judul' => 'Survei Kepatuhan Protokol Kesehatan dan Status Imunitas Lansia Pasca Vaksinasi Booster Kedua',
             'peneliti' => 'Dr. Andi Wijaya',

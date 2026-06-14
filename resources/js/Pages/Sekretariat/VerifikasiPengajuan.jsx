@@ -45,6 +45,9 @@ export default function VerifikasiPengajuan({ proposals = [] }) {
             'Revisi': 'bg-yellow-50 text-yellow-700 border-yellow-200',
             'Ditolak': 'bg-red-50 text-red-700 border-red-200',
             'Pending': 'bg-gray-50 text-gray-700 border-gray-200',
+            'Pending Admin': 'bg-purple-50 text-purple-700 border-purple-200',
+            'Pending Surat': 'bg-orange-50 text-orange-700 border-orange-200',
+            'Pending Ketua': 'bg-teal-50 text-teal-700 border-teal-200',
         };
         return (
             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${styles[status] || styles['Pending']}`}>

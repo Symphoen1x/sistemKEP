@@ -116,7 +116,7 @@ class KetuaKomisiEtikController extends Controller
     // Decision methods for EPIC 7
     public function getProposalsForDecision()
     {
-        $proposals = Protokol::where('review_status', 'Completed')
+        $proposals = Protokol::where('status', 'Pending Ketua')
             ->whereDoesntHave('decision')
             ->with('reviews')
             ->orderBy('created_at', 'desc')

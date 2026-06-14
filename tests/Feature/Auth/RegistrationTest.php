@@ -14,6 +14,7 @@ test('new users can register', function () {
         'password_confirmation' => 'password',
     ]);
 
-    $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $this->assertGuest();
+    $response->assertRedirect(route('login'));
+    $response->assertSessionHas('status', 'Pendaftaran berhasil. Akun Anda sedang menunggu verifikasi dari Sekretariat.');
 });

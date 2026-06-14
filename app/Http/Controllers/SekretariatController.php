@@ -18,7 +18,7 @@ class SekretariatController extends Controller
 {
     public function dashboard()
     {
-        $proposals = Protokol::all();
+        $proposals = Protokol::where('sekretariat_id', Auth::id())->get();
         $pendingUsers = User::where('status', 'pending')->orderBy('created_at', 'desc')->get();
         $schedules = JadwalRapat::orderBy('tanggal', 'asc')->get();
 
@@ -79,7 +79,7 @@ class SekretariatController extends Controller
 
     public function verifikasi()
     {
-        $proposals = Protokol::orderBy('created_at', 'desc')->get();
+        $proposals = Protokol::where('sekretariat_id', Auth::id())->orderBy('created_at', 'desc')->get();
         return Inertia::render('Sekretariat/VerifikasiPengajuan', [
             'proposals' => $proposals,
         ]);
@@ -142,7 +142,7 @@ class SekretariatController extends Controller
     {
         // Get all users who have the role "Reviewer"
         $reviewers = User::role('Reviewer')->get();
-        $proposals = Protokol::orderBy('created_at', 'desc')->get();
+        $proposals = Protokol::where('sekretariat_id', Auth::id())->orderBy('created_at', 'desc')->get();
 
         return Inertia::render('Sekretariat/PenugasanReviewer', [
             'reviewers' => $reviewers,
@@ -162,6 +162,14 @@ class SekretariatController extends Controller
         $proposal->update([
             'reviewer_id' => $reviewer->id,
             'status' => 'Direview',
+        ]);
+
+        Review::firstOrCreate([
+            'protokol_id' => $proposal->id,
+            'reviewer_id' => $reviewer->id,
+        ], [
+            'status' => 'Assigned',
+            'assigned_at' => Carbon::now(),
         ]);
 
         Message::create([
@@ -222,7 +230,7 @@ class SekretariatController extends Controller
 
     public function surat()
     {
-        $proposals = Protokol::orderBy('created_at', 'desc')->get();
+        $proposals = Protokol::where('sekretariat_id', Auth::id())->orderBy('created_at', 'desc')->get();
         return Inertia::render('Sekretariat/SuratSertifikat', [
             'proposals' => $proposals,
         ]);
@@ -237,9 +245,21 @@ class SekretariatController extends Controller
         $proposal = Protokol::findOrFail($id);
         $proposal->update([
             'nomor_surat' => $request->nomor_surat,
+            'status' => 'Pending Ketua',
         ]);
 
-        return back()->with('status', 'Nomor surat berhasil diperbarui.');
+        // Create notification for Ketua
+        $ketuas = User::role('Ketua Komisi Etik')->get();
+        foreach ($ketuas as $ketua) {
+            Message::create([
+                'user_id' => $ketua->id,
+                'sender_name' => 'Sekretariat Komisi Etik',
+                'subject' => "Proposal Siap Dinilai: {$proposal->nomor_pengajuan}",
+                'body' => "Proposal dengan judul \"{$proposal->judul}\" telah diberi nomor surat {$request->nomor_surat} dan siap untuk pengambilan keputusan akhir oleh Anda.",
+            ]);
+        }
+
+        return back()->with('status', 'Nomor surat berhasil diperbarui dan diteruskan ke Ketua Komisi Etik.');
     }
 
     public function uploadSK(Request $request, $id)
@@ -410,7 +430,11 @@ class SekretariatController extends Controller
             ]);
         }
 
-        $proposal->update(['review_status' => 'Assigned']);
+        $proposal->update([
+            'review_status' => 'Assigned',
+            'reviewer_id' => $request->reviewer_ids[0] ?? null,
+            'status' => 'Direview',
+        ]);
 
         return back()->with('status', 'Reviewer berhasil ditugaskan.');
     }
@@ -431,6 +455,7 @@ class SekretariatController extends Controller
     public function getProposalsForDecision()
     {
         $proposals = Protokol::where('review_status', 'Completed')
+            ->where('sekretariat_id', Auth::id())
             ->whereDoesntHave('decision')
             ->with('reviews')
             ->orderBy('created_at', 'desc')

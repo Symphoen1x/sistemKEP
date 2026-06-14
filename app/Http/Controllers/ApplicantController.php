@@ -117,7 +117,7 @@ class ApplicantController extends Controller
             'instrumen_path' => $instrumen_path,
             'sertifikat_path' => $sertifikat_path,
             'nomor_pengajuan' => $nomor_pengajuan,
-            'status' => 'Pending',
+            'status' => 'Pending Admin',
             'review_status' => 'Pending',
         ]);
 
@@ -195,7 +195,7 @@ class ApplicantController extends Controller
             'surat_izin_path' => $surat_izin_path,
             'instrumen_path' => $instrumen_path,
             'nomor_pengajuan' => $nomor_pengajuan,
-            'status' => 'Pending',
+            'status' => 'Pending Admin',
         ]);
 
         return redirect()->route('applicant.riwayat')->with('status', 'Proposal Penelitian Berhasil Diajukan!');

@@ -132,6 +132,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/users/{user}', [UserManagementController::class, 'show'])->name('users.show');
         Route::patch('/users/{user}/roles', [UserManagementController::class, 'updateRoles'])->name('users.roles');
         Route::patch('/users/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('users.toggle-status');
+
+        // Proposals routing & assignment
+        Route::get('/proposals', [\App\Http\Controllers\Admin\AdminProposalController::class, 'index'])->name('proposals.index');
+        Route::post('/proposals/{id}/assign', [\App\Http\Controllers\Admin\AdminProposalController::class, 'assignSekretariat'])->name('proposals.assign');
     });
 
     // Route Group untuk Role: Reviewer

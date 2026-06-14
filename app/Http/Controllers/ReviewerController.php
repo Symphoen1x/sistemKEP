@@ -34,9 +34,22 @@ class ReviewerController extends Controller
             ->take(5)
             ->get();
 
+        $recentProposals = $recentReviews->map(function ($review) {
+            $protokol = $review->protokol;
+            return [
+                'id' => $protokol->id,
+                'review_id' => $review->id,
+                'nomor_pengajuan' => $protokol->nomor_pengajuan,
+                'judul' => $protokol->judul,
+                'peneliti' => $protokol->peneliti,
+                'institusi' => $protokol->institusi,
+                'subjek_penelitian' => $protokol->subjek_penelitian,
+            ];
+        });
+
         return Inertia::render('Reviewer/Dashboard', [
             'stats' => $stats,
-            'recentProposals' => $recentReviews,
+            'recentProposals' => $recentProposals,
         ]);
     }
 
@@ -49,8 +62,21 @@ class ReviewerController extends Controller
             ->orderBy('assigned_at', 'desc')
             ->get();
 
+        $proposals = $reviews->map(function ($review) {
+            $protokol = $review->protokol;
+            return [
+                'id' => $protokol->id,
+                'review_id' => $review->id,
+                'nomor_pengajuan' => $protokol->nomor_pengajuan,
+                'judul' => $protokol->judul,
+                'peneliti' => $protokol->peneliti,
+                'institusi' => $protokol->institusi,
+                'subjek_penelitian' => $protokol->subjek_penelitian,
+            ];
+        });
+
         return Inertia::render('Reviewer/DaftarProposal', [
-            'reviews' => $reviews,
+            'proposals' => $proposals,
         ]);
     }
 
@@ -119,6 +145,17 @@ class ReviewerController extends Controller
         
         if ($allReviewsCompleted) {
             $proposal->update(['review_status' => 'Completed']);
+            
+            if ($request->recommendation === 'Approved') {
+                $proposal->update(['status' => 'Pending Surat']);
+            } elseif ($request->recommendation === 'Conditionally Approved') {
+                $proposal->update([
+                    'status' => 'Revisi',
+                    'catatan_revisi' => $request->feedback,
+                ]);
+            } else {
+                $proposal->update(['status' => 'Ditolak']);
+            }
         }
 
         return redirect()->route('reviewer.history')->with('status', 'Review berhasil disimpan.');
@@ -157,8 +194,21 @@ class ReviewerController extends Controller
             ->orderBy('submitted_at', 'desc')
             ->get();
 
+        $proposals = $reviews->map(function ($review) {
+            $protokol = $review->protokol;
+            return [
+                'id' => $protokol->id,
+                'review_id' => $review->id,
+                'nomor_pengajuan' => $protokol->nomor_pengajuan,
+                'judul' => $protokol->judul,
+                'peneliti' => $protokol->peneliti,
+                'status' => $protokol->status,
+                'updated_at' => $review->submitted_at ? $review->submitted_at->toIso8601String() : $review->updated_at->toIso8601String(),
+            ];
+        });
+
         return Inertia::render('Reviewer/RiwayatReview', [
-            'reviews' => $reviews,
+            'proposals' => $proposals,
         ]);
     }
 

@@ -8,8 +8,8 @@ export default function SuratSertifikat({ proposals = [] }) {
     const [nomorSurat, setNomorSurat] = useState('');
     const [showNomorModal, setShowNomorModal] = useState(false);
 
-    // Filter proposals that have been verified ('Direview' or 'Disetujui')
-    const certProposals = proposals.filter(p => p.status === 'Direview' || p.status === 'Disetujui');
+    // Filter proposals that have been verified ('Pending Surat', 'Pending Ketua', 'Disetujui')
+    const certProposals = proposals.filter(p => p.status === 'Pending Surat' || p.status === 'Pending Ketua' || p.status === 'Disetujui');
 
     const handleSaveNomor = (e) => {
         e.preventDefault();
@@ -158,9 +158,9 @@ export default function SuratSertifikat({ proposals = [] }) {
 
                                                 {/* Issue Certificate Action */}
                                                 <td className="px-6 py-4 text-center">
-                                                    {item.status === 'Disetujui' ? (
+                                                    {item.status === 'Disetujui' && item.sertifikat_path ? (
                                                         <span className="text-xs text-green-600 font-bold">Selesai</span>
-                                                    ) : (
+                                                    ) : item.status === 'Disetujui' && !item.sertifikat_path ? (
                                                         <button
                                                             type="button"
                                                             onClick={() => handleGenerateCert(item.id)}
@@ -169,6 +169,10 @@ export default function SuratSertifikat({ proposals = [] }) {
                                                             <Award className="w-3.5 h-3.5" />
                                                             <span>Terbitkan</span>
                                                         </button>
+                                                    ) : item.status === 'Pending Ketua' ? (
+                                                        <span className="text-xs text-orange-600 font-semibold bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-lg">Menunggu Ketua</span>
+                                                    ) : (
+                                                        <span className="text-xs text-blue-600 font-semibold bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg">Isi No. Surat</span>
                                                     )}
                                                 </td>
                                             </tr>

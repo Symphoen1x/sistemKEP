@@ -12,6 +12,7 @@ class Protokol extends Model
     protected $fillable = [
         'user_id',
         'reviewer_id',
+        'sekretariat_id',
         'judul',
         'peneliti',
         'nidn_nim',
@@ -45,6 +46,11 @@ class Protokol extends Model
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewer_id');
+    }
+
+    public function sekretariat()
+    {
+        return $this->belongsTo(User::class, 'sekretariat_id');
     }
 
     public function reviews()
