@@ -30,6 +30,8 @@ class User extends Authenticatable
         'institution',
         'role_type',
         'nidn_nim',
+        'expertise',
+        'registration_role',
     ];
 
     /**

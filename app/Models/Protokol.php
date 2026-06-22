@@ -36,6 +36,10 @@ class Protokol extends Model
         'nomor_surat',
         'status',
         'catatan_revisi',
+        'review_type',
+        'review_status',
+        'assigned_at',
+        'due_date',
     ];
 
     public function user()
@@ -61,5 +65,10 @@ class Protokol extends Model
     public function decision()
     {
         return $this->hasOne(Decision::class);
+    }
+
+    public function documentVersions()
+    {
+        return $this->hasMany(DocumentVersion::class);
     }
 }

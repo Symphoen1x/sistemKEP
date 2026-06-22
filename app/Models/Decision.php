@@ -11,6 +11,7 @@ class Decision extends Model
         'decided_by',
         'status',
         'notes',
+        'feedback_applicant',
         'certificate_number',
         'letter_path',
         'decided_at',

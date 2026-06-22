@@ -6,8 +6,8 @@ export default function Dokumen({ proposals = [] }) {
     // Only proposals that have approved certificates
     const certificates = proposals.filter(p => p.status === 'Disetujui' && p.sertifikat_path);
 
-    const handleDownload = (path, name) => {
-        alert(`Mengunduh berkas "${name}" ... (Simulasi Unduhan File: ${path})`);
+    const handleDownloadCert = (id) => {
+        window.location.href = route('applicant.downloadSertifikat', id);
     };
 
     return (
@@ -42,7 +42,7 @@ export default function Dokumen({ proposals = [] }) {
                                                 <p className="text-[10px] text-gray-400">Tanggal Terbit: {new Date(item.updated_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                                             </div>
                                             <button 
-                                                onClick={() => handleDownload(item.sertifikat_path, 'Sertifikat_' + item.nomor_pengajuan)}
+                                                onClick={() => handleDownloadCert(item.id)}
                                                 className="px-3.5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1 shrink-0"
                                             >
                                                 <Download className="w-4 h-4" />

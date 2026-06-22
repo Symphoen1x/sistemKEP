@@ -9,8 +9,13 @@ use App\Models\JadwalRapat;
 use App\Models\Pengumuman;
 use App\Models\Message;
 use App\Models\User;
+use App\Models\SystemConfig;
+use App\Models\AuditLog;
+use App\Services\FileStorageService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Carbon\Carbon;
 
@@ -109,6 +114,7 @@ class SekretariatController extends Controller
                 'status' => 'Revisi',
                 'catatan_revisi' => $request->catatan_revisi,
             ]);
+            AuditLog::record('verification_revisi', $proposal, null, ['catatan' => $request->catatan_revisi]);
             Message::create([
                 'user_id' => $proposal->user_id,
                 'sender_name' => 'Sekretariat Komisi Etik',
@@ -142,7 +148,25 @@ class SekretariatController extends Controller
     {
         // Get all users who have the role "Reviewer"
         $reviewers = User::role('Reviewer')->get();
-        $proposals = Protokol::where('sekretariat_id', Auth::id())->orderBy('created_at', 'desc')->get();
+        $proposals = Protokol::where('sekretariat_id', Auth::id())
+            ->with('reviewer:id,name')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id'              => $p->id,
+                    'nomor_pengajuan' => $p->nomor_pengajuan,
+                    'judul'           => $p->judul,
+                    'peneliti'        => $p->peneliti,
+                    'institusi'       => $p->institusi,
+                    'status'          => $p->status,
+                    'reviewer_id'     => $p->reviewer_id,
+                    'reviewer'        => $p->reviewer ? ['id' => $p->reviewer->id, 'name' => $p->reviewer->name] : null,
+                    'due_date'        => $p->due_date,
+                    'review_type'     => $p->review_type,
+                    'is_overdue'      => $p->due_date && Carbon::parse($p->due_date)->isPast() && $p->status === 'Direview',
+                ];
+            });
 
         return Inertia::render('Sekretariat/PenugasanReviewer', [
             'reviewers' => $reviewers,
@@ -180,6 +204,37 @@ class SekretariatController extends Controller
         ]);
 
         return back()->with('status', "Reviewer {$reviewer->name} berhasil ditugaskan ke proposal {$proposal->nomor_pengajuan}.");
+    }
+
+    /**
+     * PB53 — Send overdue reminder to reviewer for a proposal.
+     */
+    public function sendReminder($id)
+    {
+        $proposal = Protokol::findOrFail($id);
+
+        if (!$proposal->reviewer_id) {
+            return back()->with('error', 'Proposal ini belum memiliki reviewer yang ditugaskan.');
+        }
+
+        $reviewer = User::findOrFail($proposal->reviewer_id);
+        $dueDateStr = $proposal->due_date
+            ? Carbon::parse($proposal->due_date)->translatedFormat('d F Y')
+            : 'belum ditentukan';
+
+        Message::create([
+            'user_id'     => $reviewer->id,
+            'sender_name' => 'Sekretariat Komisi Etik',
+            'subject'     => "Reminder Overdue: {$proposal->nomor_pengajuan}",
+            'body'        => "Yth. {$reviewer->name},\n\nIni adalah pengingat bahwa review untuk proposal \"{$proposal->judul}\" (No. Pengajuan: {$proposal->nomor_pengajuan}) telah melewati tenggat waktu ({$dueDateStr}).\n\nMohon segera menyelesaikan review Anda. Terima kasih.",
+        ]);
+
+        AuditLog::record('overdue_reminder_sent', $proposal, null, [
+            'reviewer_id' => $reviewer->id,
+            'due_date'    => $proposal->due_date,
+        ]);
+
+        return back()->with('status', "Reminder overdue berhasil dikirim ke {$reviewer->name}.");
     }
 
     public function rapat()
@@ -266,16 +321,13 @@ class SekretariatController extends Controller
     {
         $proposal = Protokol::findOrFail($id);
         
-        $sk_path = null;
         if ($request->hasFile('sk_file')) {
-            $sk_path = '/' . $request->file('sk_file')->store('uploads', 'public');
+            $sk_path = FileStorageService::store($proposal, 'sk', $request->file('sk_file'), 'sk');
         } else {
-            $sk_path = '/storage/uploads/mock_sk_' . uniqid() . '.pdf';
+            $sk_path = '/storage/documents/mock_sk_' . uniqid() . '.pdf';
         }
 
-        $proposal->update([
-            'sk_path' => $sk_path,
-        ]);
+        $proposal->update(['sk_path' => $sk_path]);
 
         return back()->with('status', 'Surat Keputusan (SK) berhasil diunggah.');
     }
@@ -284,20 +336,50 @@ class SekretariatController extends Controller
     {
         $proposal = Protokol::findOrFail($id);
 
-        // Update status to approved if it isn't yet, and save mock cert path
+        // Gather data for certificate PDF
+        $institutionName = SystemConfig::get('institution_name', 'Universitas');
+        $ketua = User::role('Ketua Komisi Etik')->first();
+        $ketuaName = $ketua ? $ketua->name : '';
+
+        $data = [
+            'nomor_surat'       => $proposal->nomor_surat ?? 'KEP-' . $proposal->nomor_pengajuan,
+            'peneliti'          => $proposal->peneliti,
+            'nidn_nim'          => $proposal->nidn_nim,
+            'judul'             => $proposal->judul,
+            'institusi'         => $proposal->institusi,
+            'lokasi_penelitian' => $proposal->lokasi_penelitian,
+            'nomor_pengajuan'   => $proposal->nomor_pengajuan,
+            'review_type'       => $proposal->review_type,
+            'institution_name'  => $institutionName,
+            'ketua_name'        => $ketuaName,
+            'tanggal_terbit'    => Carbon::now()->translatedFormat('d F Y'),
+        ];
+
+        // Generate PDF
+        $pdf = Pdf::loadView('exports.sertifikat', $data);
+        $pdf->setPaper('a4', 'portrait');
+
+        // Store with organized path & version tracking
+        $certificatePath = FileStorageService::storeContent($proposal, 'sertifikat', $pdf->output(), 'sertifikat');
+
         $proposal->update([
-            'status' => 'Disetujui',
-            'sertifikat_path' => '/storage/sertifikat/' . $proposal->nomor_pengajuan . '.pdf',
+            'status'          => 'Disetujui',
+            'sertifikat_path' => $certificatePath,
         ]);
 
         Message::create([
-            'user_id' => $proposal->user_id,
+            'user_id'     => $proposal->user_id,
             'sender_name' => 'Sekretariat Komisi Etik',
-            'subject' => "Sertifikat Ethical Clearance Diterbitkan: {$proposal->nomor_pengajuan}",
-            'body' => "Selamat! Sertifikat Layak Etik (Ethical Clearance) untuk proposal Anda \"{$proposal->judul}\" telah diterbitkan dengan nomor {$proposal->nomor_surat}.",
+            'subject'     => "Sertifikat Ethical Clearance Diterbitkan: {$proposal->nomor_pengajuan}",
+            'body'        => "Selamat! Sertifikat Layak Etik (Ethical Clearance) untuk proposal Anda \"{$proposal->judul}\" telah diterbitkan dengan nomor {$data['nomor_surat']}.",
         ]);
 
-        return back()->with('status', 'Ethical Clearance berhasil diterbitkan.');
+        AuditLog::record('sertifikat_generated', $proposal, null, [
+            'nomor_surat' => $data['nomor_surat'],
+            'file'        => $certificatePath,
+        ]);
+
+        return back()->with('status', 'Sertifikat Ethical Clearance berhasil diterbitkan.');
     }
 
     public function laporan()
@@ -351,6 +433,61 @@ class SekretariatController extends Controller
         ]);
     }
 
+    // Epic 13 — Export PDF Laporan
+    public function exportPdf()
+    {
+        $proposals = Protokol::all();
+        $stats = [
+            'total'       => $proposals->count(),
+            'disetujui'   => $proposals->where('status', 'Disetujui')->count(),
+            'ditolak'     => $proposals->where('status', 'Ditolak')->count(),
+            'revisi'      => $proposals->where('status', 'Revisi')->count(),
+            'direview'    => $proposals->where('status', 'Direview')->count(),
+            'pending'     => $proposals->where('status', 'Pending')->count(),
+        ];
+
+        $pdf = Pdf::loadView('exports.laporan', [
+            'proposals' => $proposals,
+            'stats'     => $stats,
+            'date'      => Carbon::now()->format('d-m-Y'),
+        ]);
+
+        return $pdf->download('laporan-kep-' . Carbon::now()->format('Y-m-d') . '.pdf');
+    }
+
+    // Epic 13 — Export CSV Laporan
+    public function exportCsv()
+    {
+        $proposals = Protokol::orderBy('created_at', 'desc')->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="laporan-kep-' . Carbon::now()->format('Y-m-d') . '.csv"',
+        ];
+
+        $callback = function () use ($proposals) {
+            $file = fopen('php://output', 'w');
+            // BOM for Excel UTF-8
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fputcsv($file, ['No. Pengajuan', 'Judul', 'Peneliti', 'Institusi', 'Review Type', 'Status', 'Tanggal Pengajuan']);
+
+            foreach ($proposals as $p) {
+                fputcsv($file, [
+                    $p->nomor_pengajuan,
+                    $p->judul,
+                    $p->peneliti,
+                    $p->institusi,
+                    $p->review_type ?? '-',
+                    $p->status,
+                    $p->created_at->format('d-m-Y'),
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function profil()
     {
         return Inertia::render('Sekretariat/Profil');
@@ -394,23 +531,60 @@ class SekretariatController extends Controller
         ]);
 
         $proposal = Protokol::findOrFail($id);
-        $proposal->update([
+
+        $updateData = [
             'review_type' => $request->review_type,
             'review_status' => 'Classified',
             'due_date' => $request->due_date,
-        ]);
+        ];
 
-        return back()->with('status', 'Proposal berhasil diklasifikasikan.');
+        // Exempted proposals are auto-approved (no review needed)
+        if ($request->review_type === 'Exempted') {
+            $updateData['status'] = 'Disetujui';
+            $updateData['review_status'] = 'Completed';
+
+            Decision::create([
+                'protokol_id'    => $proposal->id,
+                'decided_by'     => Auth::id(),
+                'status'         => 'Approved',
+                'notes'          => 'Exempted review — auto-approved oleh Sekretariat.',
+                'decided_at'     => Carbon::now(),
+            ]);
+
+            Message::create([
+                'user_id'     => $proposal->user_id,
+                'sender_name' => 'Sekretariat Komisi Etik',
+                'subject'     => "Proposal Exempted (Auto-Approved): {$proposal->nomor_pengajuan}",
+                'body'        => "Proposal Anda \"{$proposal->judul}\" diklasifikasikan sebagai Exempted dan otomatis disetujui. Silakan unduh sertifikat di halaman Dokumen.",
+            ]);
+        }
+
+        $proposal->update($updateData);
+
+        $msg = $request->review_type === 'Exempted'
+            ? 'Proposal diklasifikasikan Exempted dan otomatis disetujui.'
+            : 'Proposal berhasil diklasifikasikan.';
+
+        return back()->with('status', $msg);
     }
 
     public function assignReviewers(Request $request, $id)
     {
-        $request->validate([
-            'reviewer_ids' => 'required|array|min:1',
-            'reviewer_ids.*' => 'exists:users,id',
-        ]);
-
         $proposal = Protokol::findOrFail($id);
+
+        // Dynamic min reviewer from SystemConfig based on review_type
+        $minReviewer = match ($proposal->review_type) {
+            'Full Board'  => (int) SystemConfig::get('min_reviewer_full_board', 5),
+            'Expedited'   => (int) SystemConfig::get('min_reviewer_expedited', 3),
+            default       => 1,
+        };
+
+        $request->validate([
+            'reviewer_ids'   => "required|array|min:{$minReviewer}",
+            'reviewer_ids.*' => 'exists:users,id',
+        ], [
+            'reviewer_ids.min' => "Jumlah minimum reviewer untuk {$proposal->review_type} adalah {$minReviewer} orang.",
+        ]);
         
         foreach ($request->reviewer_ids as $reviewer_id) {
             $reviewer = User::findOrFail($reviewer_id);
@@ -434,6 +608,11 @@ class SekretariatController extends Controller
             'review_status' => 'Assigned',
             'reviewer_id' => $request->reviewer_ids[0] ?? null,
             'status' => 'Direview',
+        ]);
+
+        AuditLog::record('reviewer_assigned', $proposal, null, [
+            'reviewer_ids' => $request->reviewer_ids,
+            'review_type'  => $proposal->review_type,
         ]);
 
         return back()->with('status', 'Reviewer berhasil ditugaskan.');
@@ -479,12 +658,19 @@ class SekretariatController extends Controller
 
     public function makeDecision(Request $request, $id)
     {
+        $proposal = Protokol::findOrFail($id);
+
         $request->validate([
-            'status' => 'required|in:Approved,Rejected',
-            'notes' => 'nullable|string',
+            'status' => 'required|in:Approved,AWR,Resubmission,Disapproved',
+            'notes' => 'required|string',
+            'feedback_applicant' => 'nullable|string',
         ]);
 
-        $proposal = Protokol::findOrFail($id);
+        // Disapproved hanya boleh untuk Full Board Review
+        if ($request->status === 'Disapproved' && $proposal->review_type !== 'Full Board') {
+            return back()->with('error', 'Status Disapproved hanya berlaku untuk Full Board Review.');
+        }
+
         $user = Auth::user();
 
         $certificate_number = null;
@@ -500,23 +686,47 @@ class SekretariatController extends Controller
         Decision::create([
             'protokol_id' => $proposal->id,
             'decided_by' => $user->id,
-            'status' => $request->status === 'Approved' ? 'Approved' : 'Rejected',
+            'status' => $request->status,
             'notes' => $request->notes,
+            'feedback_applicant' => $request->feedback_applicant,
             'certificate_number' => $certificate_number,
             'decided_at' => Carbon::now(),
         ]);
 
-        $proposal->update(['status' => $request->status === 'Approved' ? 'Disetujui' : 'Ditolak']);
+        // Mapping status keputusan ke status protokol
+        $statusMap = [
+            'Approved'     => 'Disetujui',
+            'AWR'          => 'AWR',
+            'Resubmission' => 'Revisi',
+            'Disapproved'  => 'Ditolak',
+        ];
+        $proposal->update(['status' => $statusMap[$request->status]]);
+
+        AuditLog::record('decision_made', $proposal, null, [
+            'status'  => $request->status,
+            'notes'   => $request->notes,
+            'decided_by' => $user->id,
+        ]);
+
+        // Notifikasi internal ke Applicant
+        $subjectMap = [
+            'Approved'     => "Proposal Disetujui: {$proposal->nomor_pengajuan}",
+            'AWR'          => "Proposal Disetujui dengan Rekomendasi: {$proposal->nomor_pengajuan}",
+            'Resubmission' => "Proposal Memerlukan Perbaikan: {$proposal->nomor_pengajuan}",
+            'Disapproved'  => "Proposal Ditolak: {$proposal->nomor_pengajuan}",
+        ];
+        $bodyMap = [
+            'Approved'     => "Selamat! Proposal Anda telah disetujui dengan nomor sertifikat: {$certificate_number}.",
+            'AWR'          => "Proposal Anda disetujui dengan rekomendasi. Catatan: " . ($request->feedback_applicant ?? $request->notes),
+            'Resubmission' => "Proposal Anda memerlukan perbaikan. Catatan: " . ($request->feedback_applicant ?? $request->notes),
+            'Disapproved'  => "Mohon maaf, proposal Anda telah ditolak. Alasan: " . $request->notes,
+        ];
 
         Message::create([
-            'user_id' => $proposal->user_id,
+            'user_id'     => $proposal->user_id,
             'sender_name' => 'Komisi Etik',
-            'subject' => $request->status === 'Approved' 
-                ? "Proposal Disetujui: {$proposal->nomor_pengajuan}"
-                : "Proposal Ditolak: {$proposal->nomor_pengajuan}",
-            'body' => $request->status === 'Approved'
-                ? "Proposal Anda telah disetujui dengan nomor sertifikat: {$certificate_number}"
-                : "Proposal Anda telah ditolak. Catatan: " . ($request->notes ?? 'Tidak ada catatan'),
+            'subject'     => $subjectMap[$request->status],
+            'body'        => $bodyMap[$request->status],
         ]);
 
         return back()->with('status', 'Keputusan berhasil disimpan.');
@@ -529,12 +739,35 @@ class SekretariatController extends Controller
             ->firstOrFail();
 
         $proposal = $decision->protokol;
+        $institutionName = SystemConfig::get('institution_name', 'Universitas');
+        $ketua = User::role('Ketua Komisi Etik')->first();
 
-        // Generate certificate path
-        $certificate_path = '/storage/sertifikat/' . $decision->certificate_number . '.pdf';
+        $data = [
+            'nomor_surat'       => $proposal->nomor_surat ?? $decision->certificate_number,
+            'peneliti'          => $proposal->peneliti,
+            'nidn_nim'          => $proposal->nidn_nim,
+            'judul'             => $proposal->judul,
+            'institusi'         => $proposal->institusi,
+            'lokasi_penelitian' => $proposal->lokasi_penelitian,
+            'nomor_pengajuan'   => $proposal->nomor_pengajuan,
+            'review_type'       => $proposal->review_type,
+            'institution_name'  => $institutionName,
+            'ketua_name'        => $ketua ? $ketua->name : '',
+            'tanggal_terbit'    => Carbon::now()->translatedFormat('d F Y'),
+        ];
+
+        $pdf = Pdf::loadView('exports.sertifikat', $data);
+        $pdf->setPaper('a4', 'portrait');
+
+        $certificatePath = FileStorageService::storeContent($proposal, 'sertifikat', $pdf->output(), 'sertifikat');
         
-        $decision->update(['letter_path' => $certificate_path]);
-        $proposal->update(['sertifikat_path' => $certificate_path]);
+        $decision->update(['letter_path' => $certificatePath]);
+        $proposal->update(['sertifikat_path' => $certificatePath]);
+
+        AuditLog::record('sertifikat_generated', $proposal, null, [
+            'nomor_surat' => $data['nomor_surat'],
+            'file'        => $certificatePath,
+        ]);
 
         return back()->with('status', 'Sertifikat berhasil dibuat.');
     }
@@ -560,5 +793,69 @@ class SekretariatController extends Controller
         ]);
 
         return back()->with('status', 'Notifikasi berhasil dikirim.');
+    }
+
+    /**
+     * PB35 — Show dedicated Disapproved form.
+     */
+    public function showDisapproveForm($id)
+    {
+        $proposal = Protokol::with('reviews')->findOrFail($id);
+
+        if ($proposal->review_type !== 'Full Board') {
+            return back()->with('error', 'Status Disapproved hanya berlaku untuk Full Board Review.');
+        }
+
+        return Inertia::render('Sekretariat/DisapprovedProposal', [
+            'proposal' => $proposal,
+        ]);
+    }
+
+    /**
+     * PB35 — Process Disapproved decision with detailed rejection reason.
+     */
+    public function disapproveProposal(Request $request, $id)
+    {
+        $proposal = Protokol::findOrFail($id);
+
+        $request->validate([
+            'rejection_reason'    => 'required|string|min:20',
+            'feedback_applicant'  => 'required|string|min:10',
+            'notes'               => 'required|string|min:10',
+        ]);
+
+        if ($proposal->review_type !== 'Full Board') {
+            return back()->with('error', 'Status Disapproved hanya berlaku untuk Full Board Review.');
+        }
+
+        $user = Auth::user();
+
+        Decision::create([
+            'protokol_id'         => $proposal->id,
+            'decided_by'          => $user->id,
+            'status'              => 'Disapproved',
+            'notes'               => $request->notes,
+            'feedback_applicant'  => $request->feedback_applicant,
+            'certificate_number'  => null,
+            'decided_at'          => Carbon::now(),
+        ]);
+
+        $proposal->update(['status' => 'Ditolak']);
+
+        AuditLog::record('proposal_disapproved', $proposal, null, [
+            'rejection_reason' => $request->rejection_reason,
+            'decided_by'       => $user->id,
+        ]);
+
+        // Notification to Applicant
+        Message::create([
+            'user_id'     => $proposal->user_id,
+            'sender_name' => 'Komisi Etik',
+            'subject'     => "Proposal Ditolak (Disapproved): {$proposal->nomor_pengajuan}",
+            'body'        => "Mohon maaf, proposal Anda \"{$proposal->judul}\" telah ditolak oleh Komisi Etik.\n\nAlasan penolakan:\n{$request->feedback_applicant}",
+        ]);
+
+        return redirect()->route('sekretariat.pengambilanKeputusan')
+            ->with('status', 'Keputusan Disapproved berhasil disimpan.');
     }
 }

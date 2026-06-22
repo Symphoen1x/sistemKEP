@@ -1,8 +1,17 @@
 import { Head, Link } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
-import { FileText, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
+import { FileText, ArrowRight, ShieldCheck, HelpCircle, Clock, AlertTriangle } from 'lucide-react';
 
 export default function DaftarProposal({ proposals = [] }) {
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '-';
+        return new Date(dateStr).toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+    };
+
     return (
         <div className="flex min-h-screen bg-gray-50 text-gray-800">
             <Sidebar />
@@ -27,18 +36,36 @@ export default function DaftarProposal({ proposals = [] }) {
                                 proposals.map((item) => (
                                     <div key={item.id} className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 hover:bg-gray-50/50 transition-colors">
                                         <div className="space-y-1.5 flex-1">
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 flex-wrap">
                                                 <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
                                                     {item.nomor_pengajuan}
                                                 </span>
                                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold border bg-orange-50 text-orange-700 border-orange-200">
                                                     Perlu Review
                                                 </span>
+                                                {item.review_type && (
+                                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold border bg-indigo-50 text-indigo-700 border-indigo-200">
+                                                        {item.review_type}
+                                                    </span>
+                                                )}
+                                                {item.is_overdue && (
+                                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold border bg-red-50 text-red-700 border-red-200 flex items-center gap-1">
+                                                        <AlertTriangle className="w-3 h-3" />
+                                                        OVERDUE
+                                                    </span>
+                                                )}
                                             </div>
                                             <h4 className="font-bold text-gray-900 leading-snug">{item.judul}</h4>
                                             <p className="text-xs text-gray-500 font-medium">
                                                 Pengusul: {item.peneliti} | {item.institusi} | Subjek: {item.subjek_penelitian}
                                             </p>
+                                            {item.due_date && (
+                                                <p className={`text-[10px] font-bold flex items-center gap-1 ${item.is_overdue ? 'text-red-600' : 'text-gray-400'}`}>
+                                                    <Clock className="w-3 h-3" />
+                                                    Tenggat: {formatDate(item.due_date)}
+                                                    {item.is_overdue && ' — Melewati batas waktu'}
+                                                </p>
+                                            )}
                                         </div>
                                         <Link 
                                             href={route('reviewer.review', item.id)}

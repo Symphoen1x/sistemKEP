@@ -6,6 +6,10 @@ use App\Http\Controllers\UserApprovalController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\ApplicantController;
 use App\Http\Controllers\SekretariatController;
+use App\Http\Controllers\AmendmentController;
+use App\Http\Controllers\AmendmentReviewController;
+use App\Http\Controllers\TerminationController;
+use App\Http\Controllers\TerminationReviewController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -24,7 +28,7 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     $user = auth()->user();
     if ($user->hasRole('Admin')) {
-        return redirect()->route('admin.users.index');
+        return redirect()->route('admin.dashboard');
     }
     if ($user->hasRole('Sekretariat')) {
         return redirect()->route('sekretariat.dashboard');
@@ -42,7 +46,7 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/admin', function () {
-    return redirect()->route('admin.users.index');
+    return redirect()->route('admin.dashboard');
 })->middleware(['auth', 'role:Admin']);
 
 Route::middleware('auth')->group(function () {
@@ -65,12 +69,22 @@ Route::middleware('auth')->group(function () {
         Route::get('/download-template', [ApplicantController::class, 'downloadTemplate'])->name('downloadTemplate');
         Route::get('/track-status', [ApplicantController::class, 'trackStatus'])->name('trackStatus');
         
+        // PB21 — Upload Revisi Dokumen
+        Route::get('/revisi/{id}', [ApplicantController::class, 'showRevisiForm'])->name('revisi.form');
+        Route::post('/revisi/{id}', [ApplicantController::class, 'storeRevisi'])->name('revisi.store');
+        
         Route::get('/riwayat', [ApplicantController::class, 'riwayat'])->name('riwayat');
         Route::get('/dokumen', [ApplicantController::class, 'dokumen'])->name('dokumen');
+        Route::get('/dokumen/{id}/download-sertifikat', [ApplicantController::class, 'downloadSertifikat'])->name('downloadSertifikat');
         Route::get('/pesan', [ApplicantController::class, 'pesan'])->name('pesan');
         Route::get('/profil', [ApplicantController::class, 'profil'])->name('profil');
         Route::post('/profil', [ApplicantController::class, 'updateProfil'])->name('profil.update');
         Route::get('/bantuan', [ApplicantController::class, 'bantuan'])->name('bantuan');
+
+        // Epic 8 — Amendment
+        Route::get('/amendment/{id}', [AmendmentController::class, 'create'])->name('amendment.create');
+        Route::post('/amendment/{id}', [AmendmentController::class, 'store'])->name('amendment.store');
+        Route::get('/amendments', [AmendmentController::class, 'myAmendments'])->name('amendments.mine');
     });
 
     // Route Group untuk Role: Sekretariat
@@ -92,6 +106,7 @@ Route::middleware('auth')->group(function () {
         // Penunjukan Reviewer
         Route::get('/reviewer', [SekretariatController::class, 'reviewer'])->name('reviewer');
         Route::post('/reviewer/{id}/assign', [SekretariatController::class, 'assignReviewer'])->name('reviewer.assign');
+        Route::post('/reviewer/{id}/reminder', [SekretariatController::class, 'sendReminder'])->name('reviewer.reminder');
         
         // Jadwal Rapat
         Route::get('/rapat', [SekretariatController::class, 'rapat'])->name('rapat');
@@ -117,15 +132,36 @@ Route::middleware('auth')->group(function () {
         Route::post('/keputusan/{id}', [SekretariatController::class, 'makeDecision'])->name('makeDecision');
         Route::post('/keputusan/{id}/sertifikat', [SekretariatController::class, 'generateCertificate'])->name('generateCertificate');
         Route::post('/keputusan/{id}/notifikasi', [SekretariatController::class, 'sendNotification'])->name('sendNotification');
+
+        // PB35 — Disapproved (separate form)
+        Route::get('/keputusan/{id}/disapprove', [SekretariatController::class, 'showDisapproveForm'])->name('showDisapproveForm');
+        Route::post('/keputusan/{id}/disapprove', [SekretariatController::class, 'disapproveProposal'])->name('disapproveProposal');
         
         // Laporan & Profil
         Route::get('/laporan', [SekretariatController::class, 'laporan'])->name('laporan');
+        Route::get('/laporan/export-pdf', [SekretariatController::class, 'exportPdf'])->name('laporan.exportPdf');
+        Route::get('/laporan/export-csv', [SekretariatController::class, 'exportCsv'])->name('laporan.exportCsv');
         Route::get('/profil', [SekretariatController::class, 'profil'])->name('profil');
         Route::post('/profil', [SekretariatController::class, 'updateProfil'])->name('profil.update');
+
+        // Epic 8 — Amendment Review
+        Route::get('/amendments', [AmendmentReviewController::class, 'index'])->name('amendments.index');
+        Route::post('/amendments/{id}/classify', [AmendmentReviewController::class, 'classify'])->name('amendments.classify');
+        Route::post('/amendments/{id}/decide', [AmendmentReviewController::class, 'decide'])->name('amendments.decide');
+        // PB39 — Assign Reviewer to Major Amendment
+        Route::post('/amendments/{id}/assign-reviewer', [AmendmentReviewController::class, 'assignReviewer'])->name('amendments.assignReviewer');
+
+        // Epic 9 — Termination Review
+        Route::get('/terminations', [TerminationReviewController::class, 'index'])->name('terminations.index');
+        Route::post('/terminations/{id}/classify', [TerminationReviewController::class, 'classify'])->name('terminations.classify');
+        Route::post('/terminations/{id}/finalize', [TerminationReviewController::class, 'finalize'])->name('terminations.finalize');
     });
 
     // Route Group untuk Role: Admin
     Route::middleware('role:Admin')->prefix('admin')->name('admin.')->group(function () {
+        // PB16 — Admin Dashboard
+        Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+
         Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
         Route::get('/users/create', [UserManagementController::class, 'create'])->name('users.create');
         Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
@@ -136,6 +172,19 @@ Route::middleware('auth')->group(function () {
         // Proposals routing & assignment
         Route::get('/proposals', [\App\Http\Controllers\Admin\AdminProposalController::class, 'index'])->name('proposals.index');
         Route::post('/proposals/{id}/assign', [\App\Http\Controllers\Admin\AdminProposalController::class, 'assignSekretariat'])->name('proposals.assign');
+
+        // PB48-50 — Konfigurasi Sistem
+        Route::get('/config', [\App\Http\Controllers\Admin\SystemConfigController::class, 'index'])->name('config.index');
+        Route::post('/config', [\App\Http\Controllers\Admin\SystemConfigController::class, 'update'])->name('config.update');
+
+        // PB45-47 — Manajemen Template
+        Route::get('/templates', [\App\Http\Controllers\Admin\TemplateController::class, 'index'])->name('templates.index');
+        Route::post('/templates', [\App\Http\Controllers\Admin\TemplateController::class, 'store'])->name('templates.store');
+        Route::post('/templates/{template}', [\App\Http\Controllers\Admin\TemplateController::class, 'update'])->name('templates.update');
+        Route::patch('/templates/{template}/toggle', [\App\Http\Controllers\Admin\TemplateController::class, 'toggleActive'])->name('templates.toggle');
+
+        // Epic 14 — Audit Log
+        Route::get('/audit-log', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-log.index');
     });
 
     // Route Group untuk Role: Reviewer
@@ -155,6 +204,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/schedules', [ReviewerController::class, 'schedules'])->name('schedules');
         Route::get('/profil', [ReviewerController::class, 'profile'])->name('profil');
         Route::post('/profil', [ReviewerController::class, 'updateProfile'])->name('profil.update');
+
+        // PB39 — Major Amendment Review by Reviewer
+        Route::get('/amendment-reviews', [ReviewerController::class, 'amendmentReviews'])->name('amendmentReviews');
+        Route::get('/amendment-reviews/{id}', [ReviewerController::class, 'showAmendmentReview'])->name('amendmentReview.show');
+        Route::post('/amendment-reviews/{id}/submit', [ReviewerController::class, 'submitAmendmentReview'])->name('amendmentReview.submit');
     });
 
     // Route Group untuk Role: Ketua Komisi Etik
@@ -168,6 +222,24 @@ Route::middleware('auth')->group(function () {
         
         Route::get('/profil', [KetuaKomisiEtikController::class, 'profil'])->name('profil');
         Route::post('/profil', [KetuaKomisiEtikController::class, 'updateProfil'])->name('profil.update');
+        
+        // PB34 — Daftar Surat Menunggu TTD
+        Route::get('/surat-ttd', [KetuaKomisiEtikController::class, 'getDaftarSuratTTD'])->name('suratTTD');
+        Route::post('/surat-ttd/{id}/sign', [KetuaKomisiEtikController::class, 'signSurat'])->name('signSurat');
+
+        // Epic 9 — Termination Eskalasi (Ketua)
+        Route::get('/terminations-eskalasi', [KetuaKomisiEtikController::class, 'getTerminationEskalasi'])->name('terminations.eskalasi');
+        Route::post('/terminations-eskalasi/{id}', [KetuaKomisiEtikController::class, 'reviewEskalasi'])->name('terminations.reviewEskalasi');
+
+        // Epic 8 — Amendment (Ketua view)
+        Route::get('/amendments', [AmendmentController::class, 'myAmendments'])->name('amendments.mine');
+    });
+
+    // Epic 9 — Termination (Applicant)
+    Route::middleware('role:Applicant')->prefix('applicant')->name('applicant.')->group(function () {
+        Route::get('/termination/{id}', [TerminationController::class, 'create'])->name('termination.create');
+        Route::post('/termination/{id}', [TerminationController::class, 'store'])->name('termination.store');
+        Route::get('/terminations', [TerminationController::class, 'myTerminations'])->name('terminations.mine');
     });
 });
 

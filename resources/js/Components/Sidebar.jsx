@@ -16,11 +16,18 @@ import {
     TrendingUp,
     ShieldCheck,
     UserPlus,
-    CheckSquare
+    CheckSquare,
+    FileSignature,
+    Bell,
+    Settings,
+    ClipboardList,
+    ShieldOff,
+    ShieldAlert,
+    FileEdit
 } from 'lucide-react';
 
 export default function Sidebar() {
-    const { auth } = usePage().props;
+    const { auth, notifications_count } = usePage().props;
     const activeRole = auth?.active_role || 'Applicant';
 
     const isActive = (routeName) => {
@@ -33,6 +40,11 @@ export default function Sidebar() {
     const getMenuItems = () => {
         if (activeRole === 'Admin') {
             return [
+                {
+                    label: 'Dashboard',
+                    icon: LayoutDashboard,
+                    route: 'admin.dashboard',
+                },
                 {
                     label: 'Manajemen Pengguna',
                     icon: Users,
@@ -47,6 +59,21 @@ export default function Sidebar() {
                     label: 'Alur Proposal',
                     icon: FileText,
                     route: 'admin.proposals.index',
+                },
+                {
+                    label: 'Manajemen Template',
+                    icon: FolderOpen,
+                    route: 'admin.templates.index',
+                },
+                {
+                    label: 'Konfigurasi Sistem',
+                    icon: Settings,
+                    route: 'admin.config.index',
+                },
+                {
+                    label: 'Audit Log',
+                    icon: ClipboardList,
+                    route: 'admin.audit-log.index',
                 }
             ];
         } else if (activeRole === 'Sekretariat') {
@@ -75,6 +102,16 @@ export default function Sidebar() {
                     label: 'Pengambilan Keputusan',
                     icon: CheckSquare,
                     route: 'sekretariat.pengambilanKeputusan',
+                },
+                {
+                    label: 'Review Amendment',
+                    icon: FileEdit,
+                    route: 'sekretariat.amendments.index',
+                },
+                {
+                    label: 'Review Terminasi',
+                    icon: ShieldOff,
+                    route: 'sekretariat.terminations.index',
                 },
                 {
                     label: 'Jadwal Rapat',
@@ -115,6 +152,11 @@ export default function Sidebar() {
                     route: 'reviewer.proposals',
                 },
                 {
+                    label: 'Review Amendment',
+                    icon: FileEdit,
+                    route: 'reviewer.amendmentReviews',
+                },
+                {
                     label: 'Riwayat Review',
                     icon: History,
                     route: 'reviewer.history',
@@ -141,6 +183,16 @@ export default function Sidebar() {
                     label: 'Pengambilan Keputusan',
                     icon: CheckSquare,
                     route: 'ketua.pengambilanKeputusan',
+                },
+                {
+                    label: 'Surat Menunggu TTD',
+                    icon: FileSignature,
+                    route: 'ketua.suratTTD',
+                },
+                {
+                    label: 'Eskalasi Terminasi',
+                    icon: ShieldAlert,
+                    route: 'ketua.terminations.eskalasi',
                 },
                 {
                     label: 'Profil Akun',
@@ -228,7 +280,17 @@ export default function Sidebar() {
             </div>
 
             {/* Footer / Logout */}
-            <div className="p-4 border-t border-slate-800">
+            <div className="p-4 border-t border-slate-800 space-y-1">
+                {/* Bell icon notifikasi */}
+                {notifications_count > 0 && (
+                    <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-blue-600/10 text-blue-400 text-xs font-semibold">
+                        <Bell className="w-4 h-4 flex-shrink-0" />
+                        <span>{notifications_count} notifikasi baru</span>
+                        <span className="ml-auto bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                            {notifications_count}
+                        </span>
+                    </div>
+                )}
                 <Link
                     href={route('logout')}
                     method="post"

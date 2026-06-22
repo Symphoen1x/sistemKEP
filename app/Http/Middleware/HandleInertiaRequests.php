@@ -42,7 +42,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
-            'notifications_count' => $user ? $user->unreadNotifications()->count() : 0,
+            'notifications_count' => $user ? \App\Models\Message::where('user_id', $user->id)->where('is_read', false)->count() : 0,
             'app_config' => [
                 'institution_name' => env('APP_NAME', 'Sistem KEP'),
                 'logo_url' => null, // Placeholder untuk logo

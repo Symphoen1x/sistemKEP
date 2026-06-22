@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\AuditLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -39,8 +40,10 @@ class UserApprovalController extends Controller
 
         $user->update(['status' => 'active']);
         $user->assignRole($request->role);
-
-        // Normally, send an email notification here about activation.
+        
+        AuditLog::record('user_approved', $user, null, ['role' => $request->role]);
+        
+        // normally, send an email notification here about activation.
 
         return back()->with('status', "Akun {$user->name} berhasil diaktivasi sebagai {$request->role}.");
     }
@@ -55,8 +58,10 @@ class UserApprovalController extends Controller
         }
 
         $user->update(['status' => 'inactive']);
-
-        // Normally, send an email notification here about rejection.
+        
+        AuditLog::record('user_rejected', $user);
+        
+        // normally, send an email notification here about rejection.
 
         return back()->with('status', "Pendaftaran akun {$user->name} telah ditolak.");
     }

@@ -7,8 +7,11 @@ use App\Models\JadwalRapat;
 use App\Models\Pengumuman;
 use App\Models\Message;
 use App\Models\User;
+use App\Models\Template;
+use App\Services\FileStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Carbon\Carbon;
 
@@ -89,14 +92,8 @@ class ApplicantController extends Controller
         $count = Protokol::count() + 1;
         $nomor_pengajuan = 'KEP-' . Carbon::now()->year . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
 
-        // File upload
-        $proposal_path = $request->file('proposal')->store('uploads/proposals', 'public');
-        $informed_consent_path = $request->file('informed_consent')->store('uploads/informed_consent', 'public');
-        $surat_izin_path = $request->file('surat_izin')->store('uploads/surat_izin', 'public');
-        $instrumen_path = $request->hasFile('instrumen') ? $request->file('instrumen')->store('uploads/instrumen', 'public') : null;
-        $sertifikat_path = $request->hasFile('sertifikat') ? $request->file('sertifikat')->store('uploads/sertifikat', 'public') : null;
-
-        Protokol::create([
+        // Create protocol first (needed for organized storage path)
+        $protokol = Protokol::create([
             'user_id' => $user->id,
             'judul' => $request->judul,
             'peneliti' => $request->nama,
@@ -111,15 +108,23 @@ class ApplicantController extends Controller
             'metode_penelitian' => $request->metode_penelitian,
             'risiko_penelitian' => $request->risiko_penelitian,
             'deskripsi_penelitian' => $request->deskripsi_penelitian,
-            'proposal_path' => $proposal_path,
-            'informed_consent_path' => $informed_consent_path,
-            'surat_izin_path' => $surat_izin_path,
-            'instrumen_path' => $instrumen_path,
-            'sertifikat_path' => $sertifikat_path,
             'nomor_pengajuan' => $nomor_pengajuan,
             'status' => 'Pending Admin',
             'review_status' => 'Pending',
         ]);
+
+        // File upload with organized structure & version tracking
+        $updatePaths = [];
+        $updatePaths['proposal_path'] = FileStorageService::store($protokol, 'proposal', $request->file('proposal'), 'initial');
+        $updatePaths['informed_consent_path'] = FileStorageService::store($protokol, 'informed_consent', $request->file('informed_consent'), 'initial');
+        $updatePaths['surat_izin_path'] = FileStorageService::store($protokol, 'surat_izin', $request->file('surat_izin'), 'initial');
+        if ($request->hasFile('instrumen')) {
+            $updatePaths['instrumen_path'] = FileStorageService::store($protokol, 'instrumen', $request->file('instrumen'), 'initial');
+        }
+        if ($request->hasFile('sertifikat')) {
+            $updatePaths['sertifikat_path'] = FileStorageService::store($protokol, 'sertifikat_pelatihan', $request->file('sertifikat'), 'initial');
+        }
+        $protokol->update($updatePaths);
 
         return redirect()->route('applicant.trackStatus')->with('status', 'Proposal Ethical Clearance berhasil diajukan!');
     }
@@ -132,7 +137,10 @@ class ApplicantController extends Controller
     public function trackStatus()
     {
         $user = Auth::user();
-        $proposals = Protokol::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
+        $proposals = Protokol::where('user_id', $user->id)
+            ->with('decision') // untuk tampilkan feedback_applicant
+            ->orderBy('created_at', 'desc')
+            ->get();
         
         return Inertia::render('Applicant/TrackStatus', [
             'proposals' => $proposals,
@@ -147,35 +155,8 @@ class ApplicantController extends Controller
         $count = Protokol::count() + 1;
         $nomor_pengajuan = 'KEP-' . Carbon::now()->year . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
 
-        // Files - simulated or stored
-        $proposal_path = null;
-        $informed_consent_path = null;
-        $surat_izin_path = null;
-        $instrumen_path = null;
-
-        if ($request->hasFile('proposal')) {
-            $proposal_path = '/' . $request->file('proposal')->store('uploads', 'public');
-        } else {
-            $proposal_path = '/storage/uploads/mock_proposal_' . uniqid() . '.pdf';
-        }
-
-        if ($request->hasFile('informed_consent')) {
-            $informed_consent_path = '/' . $request->file('informed_consent')->store('uploads', 'public');
-        } else {
-            $informed_consent_path = '/storage/uploads/mock_consent_' . uniqid() . '.pdf';
-        }
-
-        if ($request->hasFile('surat_izin')) {
-            $surat_izin_path = '/' . $request->file('surat_izin')->store('uploads', 'public');
-        } else {
-            $surat_izin_path = '/storage/uploads/mock_izin_' . uniqid() . '.pdf';
-        }
-
-        if ($request->hasFile('instrumen')) {
-            $instrumen_path = '/' . $request->file('instrumen')->store('uploads', 'public');
-        }
-
-        Protokol::create([
+        // Create protocol first for organized storage path
+        $protokol = Protokol::create([
             'user_id' => $user->id,
             'judul' => $request->judul,
             'peneliti' => $request->nama,
@@ -190,13 +171,27 @@ class ApplicantController extends Controller
             'metode_penelitian' => $request->metode_penelitian,
             'risiko_penelitian' => $request->risiko_penelitian,
             'deskripsi_penelitian' => $request->deskripsi_penelitian,
-            'proposal_path' => $proposal_path,
-            'informed_consent_path' => $informed_consent_path,
-            'surat_izin_path' => $surat_izin_path,
-            'instrumen_path' => $instrumen_path,
             'nomor_pengajuan' => $nomor_pengajuan,
             'status' => 'Pending Admin',
         ]);
+
+        // File upload with organized structure & version tracking
+        $updatePaths = [];
+        if ($request->hasFile('proposal')) {
+            $updatePaths['proposal_path'] = FileStorageService::store($protokol, 'proposal', $request->file('proposal'), 'initial');
+        }
+        if ($request->hasFile('informed_consent')) {
+            $updatePaths['informed_consent_path'] = FileStorageService::store($protokol, 'informed_consent', $request->file('informed_consent'), 'initial');
+        }
+        if ($request->hasFile('surat_izin')) {
+            $updatePaths['surat_izin_path'] = FileStorageService::store($protokol, 'surat_izin', $request->file('surat_izin'), 'initial');
+        }
+        if ($request->hasFile('instrumen')) {
+            $updatePaths['instrumen_path'] = FileStorageService::store($protokol, 'instrumen', $request->file('instrumen'), 'initial');
+        }
+        if (!empty($updatePaths)) {
+            $protokol->update($updatePaths);
+        }
 
         return redirect()->route('applicant.riwayat')->with('status', 'Proposal Penelitian Berhasil Diajukan!');
     }
@@ -217,8 +212,15 @@ class ApplicantController extends Controller
             ->whereNotNull('nomor_pengajuan')
             ->orderBy('created_at', 'desc')
             ->get();
+
+        // Template aktif dari DB
+        $templates = Template::where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'description', 'version', 'file_path', 'original_filename', 'published_at']);
+
         return Inertia::render('Applicant/Dokumen', [
             'proposals' => $proposals,
+            'templates' => $templates,
         ]);
     }
 
@@ -258,5 +260,88 @@ class ApplicantController extends Controller
     public function bantuan()
     {
         return Inertia::render('Applicant/Bantuan');
+    }
+
+    // Task 1.4 — Upload Revisi Dokumen (PB21)
+    public function showRevisiForm($id)
+    {
+        $user = Auth::user();
+        $proposal = Protokol::where('user_id', $user->id)
+            ->whereIn('status', ['Revisi', 'AWR'])
+            ->with('decision')
+            ->findOrFail($id);
+
+        return Inertia::render('Applicant/UploadRevisi', [
+            'proposal' => $proposal,
+        ]);
+    }
+
+    public function storeRevisi(Request $request, $id)
+    {
+        $user = Auth::user();
+        $proposal = Protokol::where('user_id', $user->id)
+            ->whereIn('status', ['Revisi', 'AWR'])
+            ->findOrFail($id);
+
+        $request->validate([
+            'proposal'         => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+            'informed_consent' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+            'surat_izin'       => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+            'instrumen'        => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+            'catatan_revisi_applicant' => 'nullable|string|max:1000',
+        ]);
+
+        $updateData = ['status' => 'Direvisi'];
+
+        // Version-tracked file uploads with organized structure
+        if ($request->hasFile('proposal')) {
+            $updateData['proposal_path'] = FileStorageService::store($proposal, 'proposal', $request->file('proposal'), 'revisi');
+        }
+        if ($request->hasFile('informed_consent')) {
+            $updateData['informed_consent_path'] = FileStorageService::store($proposal, 'informed_consent', $request->file('informed_consent'), 'revisi');
+        }
+        if ($request->hasFile('surat_izin')) {
+            $updateData['surat_izin_path'] = FileStorageService::store($proposal, 'surat_izin', $request->file('surat_izin'), 'revisi');
+        }
+        if ($request->hasFile('instrumen')) {
+            $updateData['instrumen_path'] = FileStorageService::store($proposal, 'instrumen', $request->file('instrumen'), 'revisi');
+        }
+
+        $proposal->update($updateData);
+
+        // Notifikasi ke Sekretariat
+        $sekretariats = User::role('Sekretariat')->get();
+        foreach ($sekretariats as $sekre) {
+            Message::create([
+                'user_id'     => $sekre->id,
+                'sender_name' => 'Sistem KEP',
+                'subject'     => "Revisi Dikirim: {$proposal->nomor_pengajuan}",
+                'body'        => "Peneliti {$proposal->peneliti} telah mengirimkan revisi untuk proposal \"{$proposal->judul}\". Silakan verifikasi kembali.",
+            ]);
+        }
+
+        return redirect()->route('applicant.trackStatus')
+            ->with('status', 'Revisi berhasil dikirim. Sekretariat akan memverifikasi kembali.');
+    }
+
+    /**
+     * PB33 — Download sertifikat PDF asli
+     */
+    public function downloadSertifikat($id)
+    {
+        $user = Auth::user();
+        $proposal = Protokol::where('user_id', $user->id)->findOrFail($id);
+
+        if (!$proposal->sertifikat_path) {
+            return back()->with('error', 'Sertifikat belum diterbitkan.');
+        }
+
+        $storagePath = str_replace('/storage/', 'public/', $proposal->sertifikat_path);
+
+        if (!Storage::exists($storagePath)) {
+            return back()->with('error', 'File sertifikat tidak ditemukan.');
+        }
+
+        return Storage::download($storagePath, 'Sertifikat_EC_' . $proposal->nomor_pengajuan . '.pdf');
     }
 }

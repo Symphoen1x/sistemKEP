@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Protokol;
 use App\Models\Review;
+use App\Models\Amendment;
 use App\Models\JadwalRapat;
 use App\Models\User;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -65,13 +67,17 @@ class ReviewerController extends Controller
         $proposals = $reviews->map(function ($review) {
             $protokol = $review->protokol;
             return [
-                'id' => $protokol->id,
-                'review_id' => $review->id,
-                'nomor_pengajuan' => $protokol->nomor_pengajuan,
-                'judul' => $protokol->judul,
-                'peneliti' => $protokol->peneliti,
-                'institusi' => $protokol->institusi,
+                'id'                => $protokol->id,
+                'review_id'         => $review->id,
+                'nomor_pengajuan'   => $protokol->nomor_pengajuan,
+                'judul'             => $protokol->judul,
+                'peneliti'          => $protokol->peneliti,
+                'institusi'         => $protokol->institusi,
                 'subjek_penelitian' => $protokol->subjek_penelitian,
+                'due_date'          => $protokol->due_date,
+                'review_type'       => $protokol->review_type,
+                'assigned_at'       => $review->assigned_at?->toIso8601String(),
+                'is_overdue'        => $protokol->due_date && Carbon::parse($protokol->due_date)->isPast(),
             ];
         });
 
@@ -111,10 +117,41 @@ class ReviewerController extends Controller
         $review = Review::where('protokol_id', $id)
             ->where('reviewer_id', Auth::id())
             ->firstOrFail();
-        
+
+        $protokol = $review->protokol;
+
+        // PB27 — Load document versions for version comparison
+        $documentVersions = \App\Models\DocumentVersion::where('protokol_id', $protokol->id)
+            ->orderBy('document_type')
+            ->orderBy('version', 'desc')
+            ->get()
+            ->groupBy('document_type')
+            ->map(function ($versions) {
+                return $versions->map(function ($v) {
+                    return [
+                        'id'                => $v->id,
+                        'document_type'     => $v->document_type,
+                        'version'           => $v->version,
+                        'file_path'         => $v->file_path,
+                        'original_filename' => $v->original_filename,
+                        'mime_type'         => $v->mime_type,
+                        'file_size'         => $v->formatted_size,
+                        'upload_context'     => $v->upload_context,
+                        'created_at'        => $v->created_at->toIso8601String(),
+                    ];
+                });
+            });
+
+        // Check if this is a resubmission (has previous versions)
+        $hasMultipleVersions = $documentVersions->some(function ($versions) {
+            return $versions->count() > 1;
+        });
+
         return Inertia::render('Reviewer/ReviewProposal', [
-            'proposal' => $review->protokol,
-            'review' => $review,
+            'proposal'          => $protokol,
+            'review'            => $review,
+            'documentVersions'  => $documentVersions,
+            'hasMultipleVersions' => $hasMultipleVersions,
         ]);
     }
 
@@ -232,6 +269,68 @@ class ReviewerController extends Controller
     public function profile()
     {
         return Inertia::render('Reviewer/Profil');
+    }
+
+    /**
+     * PB39 — List Major Amendments assigned to this Reviewer.
+     */
+    public function amendmentReviews()
+    {
+        $user = Auth::user();
+        $amendments = Amendment::where('reviewer_id', $user->id)
+            ->with(['protokol:id,judul,nomor_pengajuan,peneliti', 'documents'])
+            ->orderBy('review_assigned_at', 'desc')
+            ->get();
+
+        return Inertia::render('Reviewer/DaftarAmendment', [
+            'amendments' => $amendments,
+        ]);
+    }
+
+    /**
+     * PB39 — Show a specific Major Amendment for review.
+     */
+    public function showAmendmentReview($id)
+    {
+        $user = Auth::user();
+        $amendment = Amendment::where('reviewer_id', $user->id)
+            ->with(['protokol', 'documents', 'user:id,name'])
+            ->findOrFail($id);
+
+        return Inertia::render('Reviewer/ReviewAmendmentMajor', [
+            'amendment' => $amendment,
+            'proposal'  => $amendment->protokol,
+        ]);
+    }
+
+    /**
+     * PB39 — Submit review for a Major Amendment.
+     */
+    public function submitAmendmentReview(Request $request, $id)
+    {
+        $user = Auth::user();
+        $amendment = Amendment::where('reviewer_id', $user->id)
+            ->where('review_status', 'Assigned')
+            ->findOrFail($id);
+
+        $request->validate([
+            'feedback'       => 'required|string|min:10',
+            'recommendation' => 'required|in:Approved,Conditionally Approved,Rejected',
+        ]);
+
+        $amendment->update([
+            'review_feedback'        => $request->feedback,
+            'reviewer_recommendation' => $request->recommendation,
+            'review_status'          => 'Completed',
+            'review_submitted_at'    => Carbon::now(),
+        ]);
+
+        AuditLog::record('amendment_review_submitted', $amendment, null, [
+            'recommendation' => $request->recommendation,
+        ]);
+
+        return redirect()->route('reviewer.amendmentReviews')
+            ->with('status', 'Review Major Amendment berhasil dikirim.');
     }
 
     public function updateProfile(Request $request)

@@ -32,20 +32,24 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'phone_number' => 'nullable|string|max:20',
-            'address' => 'nullable|string',
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'name'              => 'required|string|max:255',
+            'email'             => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'phone_number'      => 'nullable|string|max:20',
+            'address'           => 'nullable|string',
+            'registration_role' => 'required|in:Applicant,Reviewer',
+            'expertise'         => 'required_if:registration_role,Reviewer|nullable|string|max:500',
+            'password'          => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone_number' => $request->phone_number,
-            'address' => $request->address,
-            'status' => 'pending',
-            'password' => Hash::make($request->password),
+            'name'              => $request->name,
+            'email'             => $request->email,
+            'phone_number'      => $request->phone_number,
+            'address'           => $request->address,
+            'registration_role' => $request->registration_role,
+            'expertise'         => $request->registration_role === 'Reviewer' ? $request->expertise : null,
+            'status'            => 'pending',
+            'password'          => Hash::make($request->password),
         ]);
 
         event(new Registered($user));

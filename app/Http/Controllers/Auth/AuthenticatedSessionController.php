@@ -76,7 +76,7 @@ class AuthenticatedSessionController extends Controller
     {
         return match ($user->active_role_name) {
             // ── Tim B (Isa) — Sudah aktif ──────────────────────────────────
-            'Admin'             => route('admin.users.index', absolute: false),
+            'Admin'             => route('admin.dashboard', absolute: false),
             'Sekretariat'       => route('sekretariat.dashboard', absolute: false),
             'Applicant'         => route('applicant.dashboard', absolute: false),
 
