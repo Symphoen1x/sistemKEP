@@ -5,6 +5,7 @@
  * Menggunakan phpoffice/phpword untuk membuat:
  *   1. Ringkasan Protokol (ringkasan-protokol.docx)
  *   2. Formulir Pengajuan (formulir-pengajuan.docx)
+ *   3. Panduan Pengusulan Kelayakan Etik (panduan-pengusulan.docx) — informatif, tanpa TTD
  *
  * Jalankan: php generate_templates.php
  */
@@ -688,5 +689,205 @@ $footer2->addPreserveText('Halaman {PAGE} dari {NUMPAGES}', [
 $objWriter2 = IOFactory::createWriter($phpWord2, 'Word2007');
 $objWriter2->save($OUTPUT_DIR . 'formulir-pengajuan.docx');
 echo "✅ Berhasil membuat: formulir-pengajuan.docx\n";
+
+// ====================================================
+// HELPER: PARAGRAF BODY
+// ====================================================
+function addBodyText($section, $text, $slateMed = '475569', $spaceAfter = 120) {
+    $section->addText($text, [
+        'size'  => 10,
+        'color' => $slateMed,
+        'name'  => 'Calibri',
+    ], ['spaceAfter' => $spaceAfter, 'alignment' => \PhpOffice\PhpWord\SimpleType\Jc::BOTH]);
+}
+
+// ====================================================
+// HELPER: LANGKAH PROSEDUR (judul tebal + deskripsi)
+// ====================================================
+function addStep($section, $no, $title, $desc, $blue = '2563EB', $slateMed = '475569') {
+    $section->addText($no . '.  ' . $title, [
+        'bold'  => true,
+        'size'  => 11,
+        'color' => $blue,
+        'name'  => 'Calibri',
+    ], ['spaceBefore' => 140, 'spaceAfter' => 20]);
+    $section->addText($desc, [
+        'size'  => 10,
+        'color' => $slateMed,
+        'name'  => 'Calibri',
+    ], ['spaceAfter' => 60, 'alignment' => \PhpOffice\PhpWord\SimpleType\Jc::BOTH]);
+}
+
+// ====================================================
+// HELPER: KOTAK CALLOUT (info biru)
+// ====================================================
+function addCallout($section, $title, $body, $blueLight = 'DBEAFE', $blueDark = '1D4ED8', $slateMed = '475569') {
+    $table = $section->addTable([
+        'borderSize'  => 6,
+        'borderColor' => '93C5FD',
+        'cellMargin'  => 120,
+        'width'       => 100 * 50,
+        'unit'        => TblWidth::PERCENT,
+    ]);
+    $table->addRow();
+    $cell = $table->addCell(9240, [
+        'bgColor'     => $blueLight,
+        'borderSize'  => 6,
+        'borderColor' => '93C5FD',
+    ]);
+    $cell->addText($title, ['bold' => true, 'size' => 9, 'color' => $blueDark, 'name' => 'Calibri']);
+    $cell->addText($body, ['size' => 9, 'color' => $slateMed, 'name' => 'Calibri']);
+    $section->addTextBreak(0);
+}
+
+// ====================================================
+// TEMPLATE 3: PANDUAN PENGUSULAN KELAYAKAN ETIK
+// ====================================================
+echo "Membuat template: Panduan Pengusulan...\n";
+
+$phpWord3 = new PhpWord();
+$phpWord3->setDefaultFontName('Calibri');
+$phpWord3->setDefaultFontSize(11);
+
+$section3 = $phpWord3->addSection([
+    'paperSize'    => 'A4',
+    'marginTop'    => 700,
+    'marginBottom' => 1000,
+    'marginLeft'   => 1200,
+    'marginRight'  => 1200,
+]);
+
+// --- HEADER TEKS + LOGO DI BODY ---
+addDocumentHeader($phpWord3, $section3, $LOGO_PATH, $BLUE_PRIMARY, $WHITE, $SLATE_DARK);
+addLogoToBody($section3, $LOGO_PATH);
+
+// ===================== COVER =====================
+$section3->addTextBreak(3);
+$section3->addText('PANDUAN PENGUSULAN', [
+    'bold'    => true,
+    'size'    => 24,
+    'color'   => $BLUE_PRIMARY,
+    'name'    => 'Calibri',
+    'allCaps' => true,
+], ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER, 'spaceAfter' => 0]);
+$section3->addText('KELAYAKAN ETIK PENELITIAN', [
+    'bold'    => true,
+    'size'    => 24,
+    'color'   => $BLUE_PRIMARY,
+    'name'    => 'Calibri',
+    'allCaps' => true,
+], ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER, 'spaceAfter' => 120]);
+$section3->addText('Pedoman bagi Pengusul — Komisi Etik Penelitian XYNORA', [
+    'italic' => true,
+    'size'   => 11,
+    'color'  => $GRAY_TEXT,
+    'name'   => 'Calibri',
+], ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER]);
+
+addDivider($section3, $BLUE_PRIMARY);
+$section3->addTextBreak(2);
+
+addCallout(
+    $section3,
+    '>> TENTANG DOKUMEN INI',
+    'Dokumen ini bersifat informatif sebagai panduan pengajuan telaah etik. Dokumen ini cukup dibaca dan TIDAK perlu ditandatangani maupun diunggah kembali ke sistem.',
+    $BLUE_LIGHT, $BLUE_DARK, $SLATE_MED
+);
+
+$section3->addPageBreak();
+
+// ===================== 1. PENDAHULUAN =====================
+addSectionTitle($section3, 'Pendahuluan', $BLUE_PRIMARY, $WHITE);
+$section3->addTextBreak(1);
+addBodyText($section3, 'Kelaikan Etik Penelitian (Ethical Clearance) adalah pernyataan tertulis bahwa suatu protokol penelitian yang melibatkan subjek manusia, hewan coba, atau data pribadi yang sensitif telah ditelaah dan dinyatakan memenuhi prinsip-prinsip etika penelitian.', $SLATE_MED);
+addBodyText($section3, 'Panduan ini disusun untuk membantu pengusul memahami ketentuan serta tahapan pengajuan telaah etik melalui sistem XYNORA, mulai dari penyiapan berkas hingga penerbitan surat kelaikan etik.', $SLATE_MED);
+addBodyText($section3, 'Setiap peneliti, baik dosen, mahasiswa, maupun peneliti umum, yang akan melaksanakan penelitian yang melibatkan subjek manusia atau hewan wajib memperoleh kelaikan etik sebelum proses pengumpulan data dimulai.', $SLATE_MED);
+
+// ===================== 2. KETENTUAN UMUM =====================
+addSectionTitle($section3, 'Ketentuan Umum', $BLUE_PRIMARY, $WHITE);
+$section3->addTextBreak(1);
+$ketentuan = [
+    'Pengusul wajib memiliki akun yang telah terverifikasi oleh Sekretariat Komisi Etik.',
+    'Seluruh berkas diunggah dalam format PDF atau DOCX dengan ukuran maksimal 10 MB per berkas.',
+    'Dokumen wajib terdiri atas: Proposal Penelitian, Informed Consent, Surat Izin Tempat Penelitian, serta Formulir Pengajuan dan Ringkasan Protokol yang telah ditandatangani.',
+    'Instrumen penelitian seperti kuesioner atau panduan wawancara dilampirkan apabila relevan dengan metode penelitian.',
+    'Formulir Pengajuan dan Ringkasan Protokol wajib ditandatangani oleh Peneliti Utama. Bagi mahasiswa, kedua berkas tersebut wajib pula ditandatangani oleh Dosen Pembimbing atau Supervisor.',
+    'Penelitian tidak diperkenankan dimulai sebelum surat kelaikan etik resmi diterbitkan.',
+    'Setiap perubahan signifikan pada protokol yang telah disetujui harus diajukan melalui mekanisme amandemen.',
+];
+foreach ($ketentuan as $item) {
+    $section3->addListItem($item, 0, ['size' => 10, 'color' => $SLATE_MED, 'name' => 'Calibri'], 'listStyle', ['spaceAfter' => 80]);
+}
+
+// ===================== 3. PROSEDUR PENGAJUAN =====================
+addSectionTitle($section3, 'Prosedur Pengajuan Etik Penelitian', $BLUE_PRIMARY, $WHITE);
+$section3->addTextBreak(1);
+addStep($section3, 1, 'Registrasi dan Aktivasi Akun', 'Pengusul membuat akun pada sistem XYNORA, kemudian menunggu verifikasi dan aktivasi akun oleh Sekretariat Komisi Etik.', $BLUE_PRIMARY, $SLATE_MED);
+addStep($section3, 2, 'Penyiapan Berkas', 'Unduh dan lengkapi Formulir Pengajuan serta Ringkasan Protokol, bubuhkan tanda tangan yang diperlukan, dan siapkan seluruh dokumen wajib lainnya.', $BLUE_PRIMARY, $SLATE_MED);
+addStep($section3, 3, 'Pengunggahan Dokumen Usulan', 'Setelah akun aktif, pengusul masuk ke sistem, mengisi data pengajuan, lalu mengunggah seluruh berkas kelengkapan usulan kelaikan etik.', $BLUE_PRIMARY, $SLATE_MED);
+addStep($section3, 4, 'Pemeriksaan Kelengkapan Dokumen', 'Sekretariat memeriksa kelengkapan berkas. Apabila dokumen belum lengkap, usulan dikembalikan kepada pengusul untuk diperbaiki dan diunggah ulang.', $BLUE_PRIMARY, $SLATE_MED);
+addStep($section3, 5, 'Telaah Awal dan Klasifikasi Jenis Telaah', 'Sekretariat melakukan telaah awal dan menetapkan kategori telaah: Exempted (dikecualikan, langsung dinyatakan layak etik), Expedited (dipercepat, ditelaah oleh reviewer dan dapat memerlukan perbaikan lalu ditelaah kembali), atau Full Board (telaah penuh oleh panel reviewer yang memerlukan persetujuan Ketua Komisi Etik dan dapat berujung perbaikan atau penolakan).', $BLUE_PRIMARY, $SLATE_MED);
+addStep($section3, 6, 'Keputusan', 'Hasil telaah dapat berupa: Disetujui, Disetujui dengan Rekomendasi, Perlu Perbaikan (Resubmission), atau Ditolak. Pengusul memperoleh pemberitahuan beserta catatan hasil telaah melalui sistem.', $BLUE_PRIMARY, $SLATE_MED);
+addStep($section3, 7, 'Penerbitan Surat Kelaikan Etik', 'Untuk usulan yang dinyatakan memenuhi kelaikan etik, Surat atau Sertifikat Kelaikan Etik (Ethical Approval) diterbitkan dan dapat diunduh oleh pengusul melalui menu Dokumen.', $BLUE_PRIMARY, $SLATE_MED);
+
+$section3->addTextBreak(1);
+addCallout(
+    $section3,
+    '>> CATATAN',
+    'Urutan ringkas alur di atas mengikuti bagan Prosedur Pengajuan Etik Penelitian. Lama proses telaah bergantung pada kategori telaah dan kelengkapan berkas yang diunggah.',
+    $BLUE_LIGHT, $BLUE_DARK, $SLATE_MED
+);
+
+// ===================== 4. LANGKAH SELANJUTNYA =====================
+addSectionTitle($section3, 'Langkah Selanjutnya', $BLUE_PRIMARY, $WHITE);
+$section3->addTextBreak(1);
+addBodyText($section3, 'Setelah memahami panduan ini, unduh kedua formulir berikut pada tautan masing-masing di halaman utama (Pusat Unduhan), lengkapi isinya, tandatangani, lalu unggah saat melakukan pengajuan kelaikan etik:', $SLATE_MED);
+
+$fileTable = $section3->addTable([
+    'borderSize'  => 6,
+    'borderColor' => 'CBD5E1',
+    'cellMargin'  => 80,
+    'width'       => 100 * 50,
+    'unit'        => TblWidth::PERCENT,
+]);
+$filesList = [
+    ['Ringkasan Protokol', 'ringkasan-protokol.docx'],
+    ['Formulir Pengajuan Telaah Etik', 'formulir-pengajuan.docx'],
+];
+foreach ($filesList as $f) {
+    $fileTable->addRow(360);
+    $nameCell = $fileTable->addCell(4620, ['bgColor' => $SLATE_LIGHT, 'borderSize' => 6, 'borderColor' => 'CBD5E1', 'valign' => 'center']);
+    $nameCell->addText($f[0], ['bold' => true, 'size' => 10, 'color' => $SLATE_MED, 'name' => 'Calibri']);
+    $codeCell = $fileTable->addCell(4620, ['bgColor' => 'FFFFFF', 'borderSize' => 6, 'borderColor' => 'CBD5E1', 'valign' => 'center']);
+    $codeCell->addText($f[1], ['size' => 10, 'color' => $BLUE_DARK, 'name' => 'Calibri']);
+}
+$section3->addTextBreak(1);
+addBodyText($section3, 'Pastikan seluruh dokumen wajib telah lengkap dan ditandatangani sebelum menekan tombol kirim pada halaman pengajuan.', $SLATE_MED);
+
+// --- FOOTER ---
+$footer3 = $section3->addFooter();
+$footerTable3 = $footer3->addTable([
+    'borderSize'  => 0,
+    'borderColor' => 'FFFFFF',
+    'width'       => 100 * 50,
+    'unit'        => TblWidth::PERCENT,
+    'cellMargin'  => 40,
+]);
+$footerTable3->addRow();
+$footerTable3->addCell(6000, ['borderSize' => 0, 'borderColor' => 'FFFFFF'])
+    ->addText('Panduan XYNORA-KEP-PP · Panduan Pengusulan Kelayakan Etik Penelitian', [
+        'size'  => 8,
+        'color' => $GRAY_TEXT,
+        'name'  => 'Calibri',
+    ]);
+$footer3->addPreserveText('Halaman {PAGE} dari {NUMPAGES}', [
+    'size'  => 8,
+    'color' => $GRAY_TEXT,
+], ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::RIGHT]);
+
+// Simpan Panduan Pengusulan
+$objWriter3 = IOFactory::createWriter($phpWord3, 'Word2007');
+$objWriter3->save($OUTPUT_DIR . 'panduan-pengusulan.docx');
+echo "✅ Berhasil membuat: panduan-pengusulan.docx\n";
 
 echo "\n🎉 Semua template berhasil dibuat di: {$OUTPUT_DIR}\n";

@@ -968,6 +968,15 @@ export default function Welcome({ auth }) {
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <a
+                                href="/documents/panduan-pengusulan.docx"
+                                download
+                                className="px-8 py-4 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded font-semibold transition flex items-center justify-center gap-2 shadow-sm"
+                            >
+                                <FileText className="w-5 h-5 text-blue-600" />
+                                Panduan Pengusulan
+                            </a>
+
+                            <a
                                 href="/documents/ringkasan-protokol.docx"
                                 download
                                 className="px-8 py-4 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded font-semibold transition flex items-center justify-center gap-2 shadow-sm"
@@ -985,6 +994,10 @@ export default function Welcome({ auth }) {
                                 Formulir Pengajuan
                             </a>
                         </div>
+
+                        <p className="mt-5 text-xs text-slate-500 dark:text-slate-500 font-light">
+                            Baca <span className="font-semibold text-slate-700 dark:text-slate-300">Panduan Pengusulan</span> terlebih dahulu untuk memahami ketentuan &amp; prosedur, lalu lengkapi kedua formulir.
+                        </p>
                     </div>
                 </div>
             </section>

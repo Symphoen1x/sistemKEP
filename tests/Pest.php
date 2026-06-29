@@ -16,6 +16,11 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
+    ->beforeEach(function () {
+        // Reset cache permission Spatie tiap test (DB di-refresh tiap test).
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        seedRoles();
+    })
     ->in('Feature');
 
 /*
@@ -44,7 +49,27 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Pastikan 5 role standar sistem KEP ada di database.
+ */
+function seedRoles(): void
 {
-    // ..
+    foreach (['Applicant', 'Reviewer', 'Sekretariat', 'Ketua Komisi Etik', 'Admin'] as $role) {
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => $role, 'guard_name' => 'web']);
+    }
+}
+
+/**
+ * Buat user aktif dengan role tertentu.
+ */
+function userWithRole(string $role, array $attributes = []): \App\Models\User
+{
+    $user = \App\Models\User::factory()->create(array_merge([
+        'active_role_name' => $role,
+        'status'           => 'active',
+    ], $attributes));
+
+    $user->assignRole($role);
+
+    return $user;
 }

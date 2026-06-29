@@ -58,77 +58,6 @@ class ApplicantController extends Controller
         return Inertia::render('Applicant/PengajuanPenelitian');
     }
 
-    public function submitProposal()
-    {
-        return Inertia::render('Applicant/PengajuanEC');
-    }
-
-    public function storeProposal(Request $request)
-    {
-        $request->validate([
-            'nama' => 'required|string',
-            'nidn_nim' => 'required|string',
-            'email' => 'required|email',
-            'no_hp' => 'required|string',
-            'institusi' => 'required|string',
-            'role_peneliti' => 'required|string',
-            'judul' => 'required|string',
-            'lokasi_penelitian' => 'required|string',
-            'anggota_tim' => 'nullable|string',
-            'subjek_penelitian' => 'required|string',
-            'metode_penelitian' => 'required|string',
-            'risiko_penelitian' => 'required|string',
-            'deskripsi_penelitian' => 'required|string',
-            'proposal' => 'required|file|mimes:pdf,doc,docx|max:10240',
-            'informed_consent' => 'required|file|mimes:pdf,doc,docx|max:10240',
-            'surat_izin' => 'required|file|mimes:pdf,doc,docx|max:10240',
-            'instrumen' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
-            'sertifikat' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
-        ]);
-
-        $user = Auth::user();
-
-        // Generate nomor pengajuan
-        $count = Protokol::count() + 1;
-        $nomor_pengajuan = 'KEP-' . Carbon::now()->year . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
-
-        // Create protocol first (needed for organized storage path)
-        $protokol = Protokol::create([
-            'user_id' => $user->id,
-            'judul' => $request->judul,
-            'peneliti' => $request->nama,
-            'nidn_nim' => $request->nidn_nim,
-            'email' => $request->email,
-            'no_hp' => $request->no_hp,
-            'institusi' => $request->institusi,
-            'role_peneliti' => $request->role_peneliti,
-            'lokasi_penelitian' => $request->lokasi_penelitian,
-            'anggota_tim' => $request->anggota_tim,
-            'subjek_penelitian' => $request->subjek_penelitian,
-            'metode_penelitian' => $request->metode_penelitian,
-            'risiko_penelitian' => $request->risiko_penelitian,
-            'deskripsi_penelitian' => $request->deskripsi_penelitian,
-            'nomor_pengajuan' => $nomor_pengajuan,
-            'status' => 'Pending Admin',
-            'review_status' => 'Pending',
-        ]);
-
-        // File upload with organized structure & version tracking
-        $updatePaths = [];
-        $updatePaths['proposal_path'] = FileStorageService::store($protokol, 'proposal', $request->file('proposal'), 'initial');
-        $updatePaths['informed_consent_path'] = FileStorageService::store($protokol, 'informed_consent', $request->file('informed_consent'), 'initial');
-        $updatePaths['surat_izin_path'] = FileStorageService::store($protokol, 'surat_izin', $request->file('surat_izin'), 'initial');
-        if ($request->hasFile('instrumen')) {
-            $updatePaths['instrumen_path'] = FileStorageService::store($protokol, 'instrumen', $request->file('instrumen'), 'initial');
-        }
-        if ($request->hasFile('sertifikat')) {
-            $updatePaths['sertifikat_path'] = FileStorageService::store($protokol, 'sertifikat_pelatihan', $request->file('sertifikat'), 'initial');
-        }
-        $protokol->update($updatePaths);
-
-        return redirect()->route('applicant.trackStatus')->with('status', 'Proposal Ethical Clearance berhasil diajukan!');
-    }
-
     public function downloadTemplate()
     {
         return response()->download(storage_path('app/public/templates/template_proposal.docx'));
@@ -149,6 +78,28 @@ class ApplicantController extends Controller
 
     public function storePengajuan(Request $request)
     {
+        $request->validate([
+            'nama' => 'required|string',
+            'nidn_nim' => 'required|string',
+            'email' => 'required|email',
+            'no_hp' => 'required|string',
+            'institusi' => 'required|string',
+            'role_peneliti' => 'required|string',
+            'judul' => 'required|string',
+            'lokasi_penelitian' => 'required|string',
+            'anggota_tim' => 'nullable|string',
+            'subjek_penelitian' => 'required|string',
+            'metode_penelitian' => 'required|string',
+            'risiko_penelitian' => 'required|string',
+            'deskripsi_penelitian' => 'required|string',
+            'proposal' => 'required|file|mimes:pdf,doc,docx|max:10240',
+            'informed_consent' => 'required|file|mimes:pdf,doc,docx|max:10240',
+            'surat_izin' => 'required|file|mimes:pdf,doc,docx|max:10240',
+            'formulir_pengajuan' => 'required|file|mimes:pdf,doc,docx|max:10240',
+            'ringkasan_protokol' => 'required|file|mimes:pdf,doc,docx|max:10240',
+            'instrumen' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+        ]);
+
         $user = Auth::user();
 
         // Generate nomor pengajuan
@@ -186,6 +137,8 @@ class ApplicantController extends Controller
         if ($request->hasFile('surat_izin')) {
             $updatePaths['surat_izin_path'] = FileStorageService::store($protokol, 'surat_izin', $request->file('surat_izin'), 'initial');
         }
+        $updatePaths['formulir_pengajuan_path'] = FileStorageService::store($protokol, 'formulir_pengajuan', $request->file('formulir_pengajuan'), 'initial');
+        $updatePaths['ringkasan_protokol_path'] = FileStorageService::store($protokol, 'ringkasan_protokol', $request->file('ringkasan_protokol'), 'initial');
         if ($request->hasFile('instrumen')) {
             $updatePaths['instrumen_path'] = FileStorageService::store($protokol, 'instrumen', $request->file('instrumen'), 'initial');
         }

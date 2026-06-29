@@ -63,9 +63,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/pengajuan', [ApplicantController::class, 'pengajuan'])->name('pengajuan');
         Route::post('/pengajuan', [ApplicantController::class, 'storePengajuan'])->name('pengajuan.store');
         
-        // EPIC 4: Pengajuan Ethical Clearance
-        Route::get('/pengajuan-ec', [ApplicantController::class, 'submitProposal'])->name('submitProposal');
-        Route::post('/pengajuan-ec', [ApplicantController::class, 'storeProposal'])->name('storeProposal');
         Route::get('/download-template', [ApplicantController::class, 'downloadTemplate'])->name('downloadTemplate');
         Route::get('/track-status', [ApplicantController::class, 'trackStatus'])->name('trackStatus');
         

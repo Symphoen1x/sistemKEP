@@ -29,6 +29,8 @@ class Protokol extends Model
         'proposal_path',
         'informed_consent_path',
         'surat_izin_path',
+        'formulir_pengajuan_path',
+        'ringkasan_protokol_path',
         'instrumen_path',
         'sertifikat_path',
         'sk_path',

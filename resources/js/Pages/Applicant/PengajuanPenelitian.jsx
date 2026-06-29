@@ -5,6 +5,7 @@ import { User, FileText, Settings, Upload, CheckCircle, ArrowLeft, ArrowRight, S
 
 export default function PengajuanPenelitian() {
     const [step, setStep] = useState(1);
+    const [attempted, setAttempted] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
         // Step 1: Peneliti
@@ -27,11 +28,59 @@ export default function PengajuanPenelitian() {
         proposal: null,
         informed_consent: null,
         surat_izin: null,
+        formulir_pengajuan: null,
+        ringkasan_protokol: null,
         instrumen: null,
     });
 
-    const nextStep = () => setStep(prev => Math.min(prev + 1, 5));
-    const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+    // Field wajib per tahap (anggota_tim, role_peneliti, instrumen, sertifikat = opsional)
+    const requiredByStep = {
+        1: ['nama', 'nidn_nim', 'email', 'no_hp', 'institusi'],
+        2: ['judul', 'lokasi_penelitian', 'subjek_penelitian'],
+        3: ['metode_penelitian', 'risiko_penelitian', 'deskripsi_penelitian'],
+        4: ['proposal', 'informed_consent', 'surat_izin', 'formulir_pengajuan', 'ringkasan_protokol'],
+        5: [],
+    };
+
+    const fieldLabels = {
+        nama: 'Nama Lengkap',
+        nidn_nim: 'NIDN/NIM',
+        email: 'Email Utama',
+        no_hp: 'Nomor HP/WhatsApp',
+        institusi: 'Institusi/Universitas',
+        judul: 'Judul Penelitian',
+        lokasi_penelitian: 'Lokasi Penelitian',
+        subjek_penelitian: 'Subjek Penelitian',
+        metode_penelitian: 'Metode Penelitian',
+        risiko_penelitian: 'Risiko Penelitian',
+        deskripsi_penelitian: 'Deskripsi/Abstrak',
+        proposal: 'Proposal Penelitian',
+        informed_consent: 'Informed Consent',
+        surat_izin: 'Surat Izin Tempat Penelitian',
+        formulir_pengajuan: 'Formulir Pengajuan (TTD)',
+        ringkasan_protokol: 'Ringkasan Protokol (TTD)',
+    };
+
+    const missingFields = (s) => (requiredByStep[s] || []).filter((f) => {
+        const v = data[f];
+        return v === null || v === undefined || (typeof v === 'string' && v.trim() === '');
+    });
+
+    const isStepComplete = (s) => missingFields(s).length === 0;
+
+    const nextStep = () => {
+        if (!isStepComplete(step)) {
+            setAttempted(true);
+            return;
+        }
+        setAttempted(false);
+        setStep(prev => Math.min(prev + 1, 5));
+    };
+
+    const prevStep = () => {
+        setAttempted(false);
+        setStep(prev => Math.max(prev - 1, 1));
+    };
 
     const handleFileChange = (field, file) => {
         setData(field, file);
@@ -39,6 +88,15 @@ export default function PengajuanPenelitian() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        // Pastikan semua tahap lengkap sebelum kirim; jika tidak, loncat ke tahap pertama yang kurang.
+        const firstIncomplete = [1, 2, 3, 4].find((s) => !isStepComplete(s));
+        if (firstIncomplete) {
+            setStep(firstIncomplete);
+            setAttempted(true);
+            return;
+        }
+
         post(route('applicant.pengajuan.store'), {
             forceFormData: true,
             onSuccess: () => {
@@ -267,6 +325,9 @@ export default function PengajuanPenelitian() {
                             {step === 4 && (
                                 <div className="space-y-6">
                                     <h3 className="font-bold text-gray-900 text-base">Tahap 4: Unggah Dokumen Syarat</h3>
+                                    <div className="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-[11px] text-blue-800 font-medium">
+                                        Unduh template <span className="font-bold">Formulir Pengajuan</span> &amp; <span className="font-bold">Ringkasan Protokol</span> di halaman utama (Pusat Unduhan), lengkapi, lalu <span className="font-bold">tandatangani (Peneliti &amp; Pembimbing/Supervisor bagi mahasiswa)</span> sebelum diunggah di sini.
+                                    </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-semibold">
                                         <div className="p-5 border border-dashed border-gray-200 rounded-2xl flex flex-col items-center text-center space-y-2">
                                             <FileText className="w-8 h-8 text-red-500" />
@@ -300,12 +361,44 @@ export default function PengajuanPenelitian() {
                                                 <p className="font-bold text-gray-900">Surat Izin Tempat Penelitian</p>
                                                 <p className="text-[10px] text-gray-400 font-medium mt-0.5">Wajib | PDF maks. 5MB</p>
                                             </div>
-                                            <input 
-                                                type="file" 
+                                            <input
+                                                type="file"
                                                 accept="application/pdf"
                                                 onChange={e => handleFileChange('surat_izin', e.target.files[0])}
                                                 className="text-xs"
                                             />
+                                        </div>
+                                        <div className="p-5 border border-dashed border-gray-200 rounded-2xl flex flex-col items-center text-center space-y-2">
+                                            <FileText className="w-8 h-8 text-emerald-500" />
+                                            <div>
+                                                <p className="font-bold text-gray-900">Formulir Pengajuan (bertanda tangan)</p>
+                                                <p className="text-[10px] text-gray-400 font-medium mt-0.5">Wajib | PDF/DOCX maks. 10MB</p>
+                                            </div>
+                                            <input
+                                                type="file"
+                                                accept=".pdf,.doc,.docx"
+                                                onChange={e => handleFileChange('formulir_pengajuan', e.target.files[0])}
+                                                className="text-xs"
+                                            />
+                                            {errors.formulir_pengajuan && (
+                                                <p className="text-[10px] text-red-500">{errors.formulir_pengajuan}</p>
+                                            )}
+                                        </div>
+                                        <div className="p-5 border border-dashed border-gray-200 rounded-2xl flex flex-col items-center text-center space-y-2">
+                                            <FileText className="w-8 h-8 text-teal-500" />
+                                            <div>
+                                                <p className="font-bold text-gray-900">Ringkasan Protokol (bertanda tangan)</p>
+                                                <p className="text-[10px] text-gray-400 font-medium mt-0.5">Wajib | PDF/DOCX maks. 10MB</p>
+                                            </div>
+                                            <input
+                                                type="file"
+                                                accept=".pdf,.doc,.docx"
+                                                onChange={e => handleFileChange('ringkasan_protokol', e.target.files[0])}
+                                                className="text-xs"
+                                            />
+                                            {errors.ringkasan_protokol && (
+                                                <p className="text-[10px] text-red-500">{errors.ringkasan_protokol}</p>
+                                            )}
                                         </div>
                                         <div className="p-5 border border-dashed border-gray-200 rounded-2xl flex flex-col items-center text-center space-y-2">
                                             <FileText className="w-8 h-8 text-orange-500" />
@@ -355,6 +448,15 @@ export default function PengajuanPenelitian() {
                                 </div>
                             )}
                         </div>
+
+                        {/* Peringatan field wajib belum lengkap */}
+                        {attempted && missingFields(step).length > 0 && (
+                            <div className="px-6 pt-4">
+                                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-[11px] font-semibold text-red-700">
+                                    Lengkapi field wajib pada tahap ini sebelum melanjutkan: {missingFields(step).map(f => fieldLabels[f] || f).join(', ')}.
+                                </div>
+                            </div>
+                        )}
 
                         {/* Navigation Actions */}
                         <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
