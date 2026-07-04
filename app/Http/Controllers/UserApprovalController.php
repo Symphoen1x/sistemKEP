@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\AuditLog;
+use App\Models\Message;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -43,7 +44,13 @@ class UserApprovalController extends Controller
         
         AuditLog::record('user_approved', $user, null, ['role' => $request->role]);
         
-        // normally, send an email notification here about activation.
+        // Send email notification here about activation.
+        Message::create([
+            'user_id' => $user->id,
+            'sender_name' => 'Sekretariat KEP',
+            'subject' => 'Pendaftaran Akun Disetujui',
+            'body' => "Selamat! Pendaftaran akun Anda di Sistem KEP telah disetujui sebagai {$request->role}. Silakan masuk ke sistem menggunakan kredensial Anda.",
+        ]);
 
         return back()->with('status', "Akun {$user->name} berhasil diaktivasi sebagai {$request->role}.");
     }
@@ -61,7 +68,13 @@ class UserApprovalController extends Controller
         
         AuditLog::record('user_rejected', $user);
         
-        // normally, send an email notification here about rejection.
+        // Send email notification here about rejection.
+        Message::create([
+            'user_id' => $user->id,
+            'sender_name' => 'Sekretariat KEP',
+            'subject' => 'Pendaftaran Akun Ditolak',
+            'body' => "Mohon maaf, pendaftaran akun Anda di Sistem KEP ditolak oleh Sekretariat. Silakan hubungi kami untuk informasi lebih lanjut.",
+        ]);
 
         return back()->with('status', "Pendaftaran akun {$user->name} telah ditolak.");
     }
