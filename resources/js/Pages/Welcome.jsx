@@ -1,360 +1,1062 @@
+import { useEffect, useRef, useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
+import anime from 'animejs';
+import { ShieldCheck, TrendingUp, Scale, FileText, ChevronRight, Moon, Sun, Music, Volume2, VolumeX } from 'lucide-react';
 
-export default function Welcome({ auth, laravelVersion, phpVersion }) {
-    const handleImageError = () => {
-        document
-            .getElementById('screenshot-container')
-            ?.classList.add('!hidden');
-        document.getElementById('docs-card')?.classList.add('!row-span-1');
-        document
-            .getElementById('docs-card-content')
-            ?.classList.add('!flex-row');
-        document.getElementById('background')?.classList.add('!hidden');
+const LOFI_TRACKS = [
+    { url: 'https://stream.chillhop.com/mp3/9476', title: 'Apple Juice' },
+    { url: 'https://stream.chillhop.com/mp3/8448', title: 'Tôzen' },
+    { url: 'https://stream.chillhop.com/mp3/8878', title: 'Swiss' },
+    { url: 'https://stream.chillhop.com/mp3/8603', title: 'Like This One, & Then Some' },
+    { url: 'https://stream.chillhop.com/mp3/8598', title: 'Secret Meetings' },
+    { url: 'https://stream.chillhop.com/mp3/8596', title: 'Fluid Dynamics' },
+    { url: 'https://stream.chillhop.com/mp3/8562', title: 'Theme From Endless Sunset' },
+    { url: 'https://stream.chillhop.com/mp3/8591', title: 'Outskirts' },
+    { url: 'https://stream.chillhop.com/mp3/8587', title: 'Squba' }
+];
+
+export default function Welcome({ auth }) {
+    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [showLandingGate, setShowLandingGate] = useState(true); // State untuk mengontrol gerbang utama
+
+    // Refs baru untuk Gerbang Sinematik
+    const inkPreloaderRef = useRef(null);
+    const landingGateRef = useRef(null);
+    const gateDoorRef = useRef(null);
+    const gateContentRef = useRef(null);
+
+    // Refs bawaan lama
+    const heroSectionRef = useRef(null);
+    const parallaxBgRef = useRef(null);
+    const parallaxContentRef = useRef(null);
+    const parallaxOfficeLayerRef = useRef(null);
+    const svgPathRef = useRef(null);
+    const statsRef = useRef(null);
+    const stat1Ref = useRef(null);
+    const stat2Ref = useRef(null);
+    const stat3Ref = useRef(null);
+    const principlesRef = useRef(null);
+
+    // Canvas & Mouse coordinates tracking for Torii Studio interactive visualizer
+    const canvasRef = useRef(null);
+    const mouseRef = useRef({ x: 0, y: 0 });
+
+    // Refs untuk mencegah double trigger
+    const isEnteringRef = useRef(false);
+
+    // State untuk Lofi Music
+    const [showMusicMenu, setShowMusicMenu] = useState(false);
+    const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+    const [currentTrack, setCurrentTrack] = useState(null);
+    const audioRef = useRef(null);
+
+    // Cleanup audio on unmount
+    useEffect(() => {
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+        };
+    }, []);
+
+    const toggleMusic = () => {
+        if (!audioRef.current) {
+            const randomTrack = LOFI_TRACKS[Math.floor(Math.random() * LOFI_TRACKS.length)];
+            setCurrentTrack(randomTrack);
+            const audio = new Audio(randomTrack.url);
+            audio.loop = true;
+            audioRef.current = audio;
+        }
+
+        if (isMusicPlaying) {
+            audioRef.current.pause();
+            setIsMusicPlaying(false);
+        } else {
+            audioRef.current.play().catch(err => console.log('Audio playback error:', err));
+            setIsMusicPlaying(true);
+        }
     };
+
+    const changeTrack = () => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+        }
+        const randomTrack = LOFI_TRACKS[Math.floor(Math.random() * LOFI_TRACKS.length)];
+        setCurrentTrack(randomTrack);
+        const audio = new Audio(randomTrack.url);
+        audio.loop = true;
+        audioRef.current = audio;
+        if (isMusicPlaying) {
+            audio.play().catch(err => console.log('Audio playback error:', err));
+        }
+    };
+
+    // 1. Logika Theme (Dark/Light)
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            setIsDarkMode(true);
+            document.documentElement.classList.add('dark');
+        } else if (savedTheme === 'light') {
+            setIsDarkMode(false);
+            document.documentElement.classList.remove('dark');
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            setIsDarkMode(true);
+            document.documentElement.classList.add('dark');
+        }
+    }, []);
+
+    const toggleTheme = () => {
+        const newMode = !isDarkMode;
+        setIsDarkMode(newMode);
+        if (newMode) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    };
+
+    // 2. Efek Parallax via Scroll Event (Hanya berjalan jika Gerbang sudah terbuka)
+    useEffect(() => {
+        const handleScroll = () => {
+            if (showLandingGate || !heroSectionRef.current) return;
+            const scrolled = window.scrollY;
+
+            if (parallaxBgRef.current) {
+                parallaxBgRef.current.style.transform = `translateY(${scrolled * 0.35}px) scale(${1 + scrolled * 0.0004})`;
+            }
+            if (parallaxContentRef.current) {
+                parallaxContentRef.current.style.transform = `translateY(${scrolled * 0.12}px)`;
+                parallaxContentRef.current.style.opacity = `${1 - scrolled / 700}`;
+            }
+            if (parallaxOfficeLayerRef.current) {
+                parallaxOfficeLayerRef.current.style.transform = `translateY(${-scrolled * 0.15}px) rotate(${scrolled * 0.02}deg)`;
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [showLandingGate]);
+
+    // 3. Efek Animasi Pertama: Bercakan Cat Memudar ke Layar Gerbang
+    useEffect(() => {
+        document.body.style.overflow = 'hidden'; // Kunci scroll di awal
+
+        // Animasi bercak cat menghilang menggunakan efek lingkaran bertingkat / clipPath organik
+        anime({
+            targets: inkPreloaderRef.current,
+            clipPath: ['circle(100% at 50% 50%)', 'circle(0% at 50% 50%)'],
+            duration: 1600,
+            delay: 500,
+            easing: 'easeInOutQuint',
+            complete: () => {
+                if (inkPreloaderRef.current) inkPreloaderRef.current.style.display = 'none';
+            }
+        });
+
+        // Efek masuk elemen teks di Gerbang Utama (Simulasi Thorgal)
+        anime({
+            targets: '.gate-fade-in',
+            opacity: [0, 1],
+            translateY: [30, 0],
+            scale: [0.95, 1],
+            delay: anime.stagger(150, { start: 1000 }),
+            duration: 1200,
+            easing: 'easeOutExpo'
+        });
+    }, []);
+
+    // 3.5. Canvas Particle & Noise Animation Loop for Torii Studio Hero Visualizer
+    useEffect(() => {
+        if (showLandingGate) return;
+
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        let animationId;
+        let width = canvas.width = canvas.offsetWidth;
+        let height = canvas.height = canvas.offsetHeight;
+
+        const handleResize = () => {
+            if (canvas) {
+                width = canvas.width = canvas.offsetWidth;
+                height = canvas.height = canvas.offsetHeight;
+            }
+        };
+        window.addEventListener('resize', handleResize);
+
+        // Particles settings
+        const particleCount = 60;
+        const particles = [];
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                vx: (Math.random() - 0.5) * 0.6,
+                vy: (Math.random() - 0.5) * 0.6,
+                radius: Math.random() * 2 + 1,
+                alpha: Math.random() * 0.6 + 0.2
+            });
+        }
+
+        const render = () => {
+            ctx.clearRect(0, 0, width, height);
+
+            // Grid lines
+            ctx.strokeStyle = isDarkMode ? 'rgba(59, 130, 246, 0.05)' : 'rgba(59, 130, 246, 0.09)';
+            ctx.lineWidth = 1;
+            const gridSize = 45;
+            for (let x = 0; x < width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+
+            // Glow backdrops
+            const time = Date.now() * 0.001;
+            const circleColor1 = isDarkMode ? 'rgba(59, 130, 246, 0.16)' : 'rgba(59, 130, 246, 0.1)';
+            const circleColor2 = isDarkMode ? 'rgba(14, 165, 233, 0.14)' : 'rgba(14, 165, 233, 0.08)';
+
+            ctx.save();
+            ctx.filter = 'blur(45px)';
+
+            const c1x = width / 2 + Math.cos(time * 0.4) * 50;
+            const c1y = height / 2 + Math.sin(time * 0.3) * 50;
+            ctx.fillStyle = circleColor1;
+            ctx.beginPath();
+            ctx.arc(c1x, c1y, 80, 0, Math.PI * 2);
+            ctx.fill();
+
+            const c2x = width / 2 + Math.sin(time * 0.35) * 70;
+            const c2y = height / 2 + Math.cos(time * 0.5) * 30;
+            ctx.fillStyle = circleColor2;
+            ctx.beginPath();
+            ctx.arc(c2x, c2y, 60, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+
+            // Particles
+            particles.forEach((p, idx) => {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0 || p.x > width) p.vx *= -1;
+                if (p.y < 0 || p.y > height) p.vy *= -1;
+
+                // Mouse gravity attraction
+                const dx = mouseRef.current.x - p.x;
+                const dy = mouseRef.current.y - p.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 150) {
+                    const force = (150 - dist) / 150;
+                    p.x += (dx / dist) * force * 0.35;
+                    p.y += (dy / dist) * force * 0.35;
+                }
+
+                ctx.fillStyle = isDarkMode
+                    ? `rgba(96, 165, 250, ${p.alpha})`
+                    : `rgba(29, 78, 216, ${p.alpha})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Links
+                for (let j = idx + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const ldx = p.x - p2.x;
+                    const ldy = p.y - p2.y;
+                    const ldist = Math.sqrt(ldx * ldx + ldy * ldy);
+
+                    if (ldist < 80) {
+                        ctx.strokeStyle = isDarkMode
+                            ? `rgba(96, 165, 250, ${(1 - ldist / 80) * 0.15})`
+                            : `rgba(29, 78, 216, ${(1 - ldist / 80) * 0.12})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            });
+
+            // Modern vector cards inspired by Torii Studio UI layout
+            ctx.fillStyle = isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)';
+            ctx.strokeStyle = isDarkMode ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.08)';
+            ctx.lineWidth = 1;
+
+            const rectWidth = 120 + Math.sin(time) * 10;
+            const rectHeight = 36;
+            const rx = width / 2 - rectWidth / 2 + Math.cos(time * 0.15) * 20;
+            const ry = height / 2 - rectHeight / 2 + Math.sin(time * 0.2) * 20;
+
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(rx, ry, rectWidth, rectHeight, 6);
+            } else {
+                ctx.rect(rx, ry, rectWidth, rectHeight);
+            }
+            ctx.fill();
+            ctx.stroke();
+
+            // Action dots/blocks inside
+            ctx.fillStyle = isDarkMode ? 'rgba(96, 165, 250, 0.5)' : 'rgba(37, 99, 235, 0.6)';
+            const r2x = rx - 30;
+            const r2y = ry + 8;
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(r2x, r2y, 22, 20, 4);
+            } else {
+                ctx.rect(r2x, r2y, 22, 20);
+            }
+            ctx.fill();
+
+            ctx.fillStyle = isDarkMode ? 'rgba(244, 63, 94, 0.6)' : 'rgba(225, 29, 72, 0.6)';
+            const r3x = rx + rectWidth + 8;
+            const r3y = ry + 8;
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(r3x, r3y, 22, 20, 4);
+            } else {
+                ctx.rect(r3x, r3y, 22, 20);
+            }
+            ctx.fill();
+
+            animationId = requestAnimationFrame(render);
+        };
+
+        render();
+
+        const handleMouseMove = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseRef.current = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        };
+        canvas.addEventListener('mousemove', handleMouseMove);
+
+        return () => {
+            cancelAnimationFrame(animationId);
+            window.removeEventListener('resize', handleResize);
+            if (canvas) canvas.removeEventListener('mousemove', handleMouseMove);
+        };
+    }, [showLandingGate, isDarkMode]);
+
+    const handleEnterPortal = () => {
+        if (isEnteringRef.current) return;
+        isEnteringRef.current = true;
+
+        const gateTimeline = anime.timeline({
+            complete: () => {
+                setShowLandingGate(false);
+                document.body.style.overflow = 'unset';
+
+                triggerMainHeroAnimation();
+
+                setTimeout(() => {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                }, 50);
+            }
+        });
+
+        gateTimeline
+        .add({
+            targets: gateContentRef.current,
+            opacity: 0,
+            scale: 1.3,
+            duration: 800,
+            easing: 'easeInQuad'
+        })
+        .add({
+            targets: gateDoorRef.current,
+            scale: 4,
+            opacity: [1, 0],
+            duration: 1200,
+            easing: 'easeInOutExpo'
+        }, '-=400')
+        .add({
+            targets: landingGateRef.current,
+            opacity: 0,
+            duration: 600,
+            easing: 'linear'
+        }, '-=600');
+    };
+
+    useEffect(() => {
+        if (!showLandingGate) return;
+
+        const handleGateWheel = (e) => {
+            if (e.deltaY > 10) {
+                handleEnterPortal();
+            }
+        };
+
+        let touchStartY = 0;
+        const handleTouchStart = (e) => {
+            touchStartY = e.touches[0].clientY;
+        };
+
+        const handleTouchMove = (e) => {
+            const touchEndY = e.touches[0].clientY;
+            if (touchStartY - touchEndY > 30) {
+                handleEnterPortal();
+            }
+        };
+
+        window.addEventListener('wheel', handleGateWheel, { passive: true });
+        window.addEventListener('touchstart', handleTouchStart, { passive: true });
+        window.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+        return () => {
+            window.removeEventListener('wheel', handleGateWheel);
+            window.removeEventListener('touchstart', handleTouchStart);
+            window.removeEventListener('touchmove', handleTouchMove);
+        };
+    }, [showLandingGate]);
+
+
+    // Fungsi Trigger Animasi Main Content bawaan
+    const triggerMainHeroAnimation = () => {
+        anime({
+            targets: '.hero-element',
+            translateY: [40, 0],
+            opacity: [0, 1],
+            delay: anime.stagger(100),
+            easing: 'easeOutBack',
+            duration: 800
+        });
+
+        if (svgPathRef.current) {
+            anime({
+                targets: svgPathRef.current.querySelectorAll('path, circle:not(.fill-current), rect'),
+                strokeDashoffset: [anime.setDashoffset, 0],
+                easing: 'easeInOutSine',
+                duration: 2000,
+                delay: function(el, i) { return i * 150 }
+            });
+        }
+
+        // Intersection Observers untuk statistik & cards
+        const observerOptions = { threshold: 0.2 };
+        let statsAnimated = false;
+        const statsObserver = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !statsAnimated) {
+                statsAnimated = true;
+                anime({ targets: stat1Ref.current, innerHTML: [0, 1500], round: 1, easing: 'easeOutExpo', duration: 2000 });
+                anime({ targets: stat2Ref.current, innerHTML: [0, 120], round: 1, easing: 'easeOutExpo', duration: 2000, delay: 200 });
+                anime({ targets: stat3Ref.current, innerHTML: [0, 14], round: 1, easing: 'easeOutExpo', duration: 2000, delay: 400 });
+            }
+        }, observerOptions);
+        if (statsRef.current) statsObserver.observe(statsRef.current);
+
+        let cardsAnimated = false;
+        const cardsObserver = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !cardsAnimated) {
+                cardsAnimated = true;
+                anime({
+                    targets: '.principle-card',
+                    translateY: [40, 0],
+                    opacity: [0, 1],
+                    delay: anime.stagger(200),
+                    easing: 'spring(1, 80, 10, 0)',
+                });
+            }
+        }, observerOptions);
+        if (principlesRef.current) cardsObserver.observe(principlesRef.current);
+    };
+
+    // Hover effect untuk SVG Utama
+    const handleSvgHover = () => {
+        if (!svgPathRef.current) return;
+        anime.remove(svgPathRef.current);
+        anime({ targets: svgPathRef.current, scale: 1.05, translateY: -10, duration: 500, easing: 'easeOutBack' });
+    };
+    const handleSvgLeave = () => {
+        if (!svgPathRef.current) return;
+        anime.remove(svgPathRef.current);
+        anime({ targets: svgPathRef.current, scale: 1, translateY: 0, duration: 600, easing: 'easeOutElastic(1, .8)' });
+    };
+
+    // Smooth navigation scrolling
+    const handleNavClick = (e, id) => {
+        e.preventDefault();
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
+    // General card scroll slide-in transition observer
+    useEffect(() => {
+        if (showLandingGate) return;
+
+        const animElements = document.querySelectorAll('.scroll-animate');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.remove('opacity-0', 'translate-y-10');
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.08 });
+
+        animElements.forEach(el => observer.observe(el));
+        return () => observer.disconnect();
+    }, [showLandingGate]);
+
+    // Cursor glitter trail effect (Top section only)
+    useEffect(() => {
+        if (showLandingGate) return;
+
+        const handleMouseMoveGlitter = (e) => {
+            if (window.scrollY > 400) return;
+
+            const container = document.getElementById('glitter-container');
+            if (!container) return;
+
+            for (let i = 0; i < 2; i++) {
+                const sparkle = document.createElement('div');
+                const size = Math.random() * 5 + 3; // size between 3px and 8px
+
+                sparkle.className = 'pointer-events-none fixed rounded-full transition-all duration-700 ease-out z-[9999]';
+                sparkle.style.left = `${e.clientX}px`;
+                sparkle.style.top = `${e.clientY}px`;
+                sparkle.style.width = `${size}px`;
+                sparkle.style.height = `${size}px`;
+
+                const colors = [
+                    'rgba(59, 130, 246, 0.85)', // blue-500
+                    'rgba(14, 165, 233, 0.85)', // sky-500
+                    'rgba(96, 165, 250, 0.7)',  // blue-400
+                ];
+                sparkle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                sparkle.style.boxShadow = '0 0 6px rgba(59, 130, 246, 0.7)';
+
+                const vx = (Math.random() - 0.5) * 2;
+                const vy = (Math.random() - 0.5) * 2 + 0.8;
+
+                container.appendChild(sparkle);
+
+                requestAnimationFrame(() => {
+                    sparkle.style.transform = `translate(${vx * 24}px, ${vy * 24}px) scale(0)`;
+                    sparkle.style.opacity = '0';
+                });
+
+                setTimeout(() => {
+                    sparkle.remove();
+                }, 700);
+            }
+        };
+
+        window.addEventListener('mousemove', handleMouseMoveGlitter);
+        return () => window.removeEventListener('mousemove', handleMouseMoveGlitter);
+    }, [showLandingGate]);
 
     return (
         <>
-            <Head title="Welcome" />
-            <div className="bg-gray-50 text-black/50 dark:bg-black dark:text-white/50">
-                <img
-                    id="background"
-                    className="absolute -left-20 top-0 max-w-[877px]"
-                    src="https://laravel.com/assets/img/welcome/background.svg"
-                />
-                <div className="relative flex min-h-screen flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
-                    <div className="relative w-full max-w-2xl px-6 lg:max-w-7xl">
-                        <header className="grid grid-cols-2 items-center gap-2 py-10 lg:grid-cols-3">
-                            <div className="flex lg:col-start-2 lg:justify-center">
-                                <svg
-                                    className="h-12 w-auto text-white lg:h-16 lg:text-[#FF2D20]"
-                                    viewBox="0 0 62 65"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path
-                                        d="M61.8548 14.6253C61.8778 14.7102 61.8895 14.7978 61.8897 14.8858V28.5615C61.8898 28.737 61.8434 28.9095 61.7554 29.0614C61.6675 29.2132 61.5409 29.3392 61.3887 29.4265L49.9104 36.0351V49.1337C49.9104 49.4902 49.7209 49.8192 49.4118 49.9987L25.4519 63.7916C25.3971 63.8227 25.3372 63.8427 25.2774 63.8639C25.255 63.8714 25.2338 63.8851 25.2101 63.8913C25.0426 63.9354 24.8666 63.9354 24.6991 63.8913C24.6716 63.8838 24.6467 63.8689 24.6205 63.8589C24.5657 63.8389 24.5084 63.8215 24.456 63.7916L0.501061 49.9987C0.348882 49.9113 0.222437 49.7853 0.134469 49.6334C0.0465019 49.4816 0.000120578 49.3092 0 49.1337L0 8.10652C0 8.01678 0.0124642 7.92953 0.0348998 7.84477C0.0423783 7.8161 0.0598282 7.78993 0.0697995 7.76126C0.0884958 7.70891 0.105946 7.65531 0.133367 7.6067C0.152063 7.5743 0.179485 7.54812 0.20192 7.51821C0.230588 7.47832 0.256763 7.43719 0.290416 7.40229C0.319084 7.37362 0.356476 7.35243 0.388883 7.32751C0.425029 7.29759 0.457436 7.26518 0.498568 7.2415L12.4779 0.345059C12.6296 0.257786 12.8015 0.211853 12.9765 0.211853C13.1515 0.211853 13.3234 0.257786 13.475 0.345059L25.4531 7.2415H25.4556C25.4955 7.26643 25.5292 7.29759 25.5653 7.32626C25.5977 7.35119 25.6339 7.37362 25.6625 7.40104C25.6974 7.43719 25.7224 7.47832 25.7523 7.51821C25.7735 7.54812 25.8021 7.5743 25.8196 7.6067C25.8483 7.65656 25.8645 7.70891 25.8844 7.76126C25.8944 7.78993 25.9118 7.8161 25.9193 7.84602C25.9423 7.93096 25.954 8.01853 25.9542 8.10652V33.7317L35.9355 27.9844V14.8846C35.9355 14.7973 35.948 14.7088 35.9704 14.6253C35.9792 14.5954 35.9954 14.5692 36.0053 14.5405C36.0253 14.4882 36.0427 14.4346 36.0702 14.386C36.0888 14.3536 36.1163 14.3274 36.1375 14.2975C36.1674 14.2576 36.1923 14.2165 36.2272 14.1816C36.2559 14.1529 36.292 14.1317 36.3244 14.1068C36.3618 14.0769 36.3942 14.0445 36.4341 14.0208L48.4147 7.12434C48.5663 7.03694 48.7383 6.99094 48.9133 6.99094C49.0883 6.99094 49.2602 7.03694 49.4118 7.12434L61.3899 14.0208C61.4323 14.0457 61.4647 14.0769 61.5021 14.1055C61.5333 14.1305 61.5694 14.1529 61.5981 14.1803C61.633 14.2165 61.6579 14.2576 61.6878 14.2975C61.7103 14.3274 61.7377 14.3536 61.7551 14.386C61.7838 14.4346 61.8 14.4882 61.8199 14.5405C61.8312 14.5692 61.8474 14.5954 61.8548 14.6253ZM59.893 27.9844V16.6121L55.7013 19.0252L49.9104 22.3593V33.7317L59.8942 27.9844H59.893ZM47.9149 48.5566V37.1768L42.2187 40.4299L25.953 49.7133V61.2003L47.9149 48.5566ZM1.99677 9.83281V48.5566L23.9562 61.199V49.7145L12.4841 43.2219L12.4804 43.2194L12.4754 43.2169C12.4368 43.1945 12.4044 43.1621 12.3682 43.1347C12.3371 43.1097 12.3009 43.0898 12.2735 43.0624L12.271 43.0586C12.2386 43.0275 12.2162 42.9888 12.1887 42.9539C12.1638 42.9203 12.1339 42.8916 12.114 42.8567L12.1127 42.853C12.0903 42.8156 12.0766 42.7707 12.0604 42.7283C12.0442 42.6909 12.023 42.656 12.013 42.6161C12.0005 42.5688 11.998 42.5177 11.9931 42.4691C11.9881 42.4317 11.9781 42.3943 11.9781 42.3569V15.5801L6.18848 12.2446L1.99677 9.83281ZM12.9777 2.36177L2.99764 8.10652L12.9752 13.8513L22.9541 8.10527L12.9752 2.36177H12.9777ZM18.1678 38.2138L23.9574 34.8809V9.83281L19.7657 12.2459L13.9749 15.5801V40.6281L18.1678 38.2138ZM48.9133 9.14105L38.9344 14.8858L48.9133 20.6305L58.8909 14.8846L48.9133 9.14105ZM47.9149 22.3593L42.124 19.0252L37.9323 16.6121V27.9844L43.7219 31.3174L47.9149 33.7317V22.3593ZM24.9533 47.987L39.59 39.631L46.9065 35.4555L36.9352 29.7145L25.4544 36.3242L14.9907 42.3482L24.9533 47.987Z"
-                                        fill="currentColor"
-                                    />
-                                </svg>
-                            </div>
-                            <nav className="-mx-3 flex flex-1 justify-end">
-                                {auth.user ? (
-                                    <Link
-                                        href={route('dashboard')}
-                                        className="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
+            {/* Glitter particle container */}
+            <div id="glitter-container" className="fixed inset-0 pointer-events-none z-[9999]" />
+
+            <Head title="Komisi Etik Penelitian" />
+
+            {/* --- 1. FASE PRELOADER: BERCAK CAT MEMUDAR --- */}
+            <div
+                ref={inkPreloaderRef}
+                className="fixed inset-0 z-[200] flex bg-slate-950 text-white pointer-events-none items-center justify-center"
+                style={{ clipPath: 'circle(100% at 50% 50%)' }}
+            >
+                <div className="flex flex-col items-center gap-2">
+                    <img src="images/KEP.png" alt="Logo KEP" className="w-16 h-16 rounded-full animate-pulse" />
+                    <span className="text-xs font-mono tracking-widest uppercase opacity-60">Initializing Portal...</span>
+                </div>
+            </div>
+
+            {/* --- 2. FASE GERBANG UTAMA (STYLE SCREENSHOT THORGAL) --- */}
+            {showLandingGate && (
+                <div
+                    ref={landingGateRef}
+                    className="fixed inset-0 z-[100] flex flex-col justify-between items-center bg-cover bg-center select-none"
+                    style={{
+                        backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('https://images.unsplash.com/photo-1648291881755-f984c18e16cb?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')`
+                    }}
+                >
+                    {/* Header Atas Gerbang */}
+                    <div className="w-full max-w-7xl px-8 py-6 flex justify-between items-center text-white/80 font-medium text-sm tracking-widest gate-fade-in opacity-0">
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowMusicMenu(!showMusicMenu)}
+                                className="flex items-center gap-2 border border-white/20 px-3 py-1 rounded backdrop-blur-sm hover:bg-white/10 hover:border-white/40 transition text-white font-medium text-xs tracking-widest"
+                            >
+                                <span className={`w-2 h-2 rounded-full ${isMusicPlaying ? 'bg-blue-400 animate-ping' : 'bg-slate-400'}`}></span>
+                                <span>MENU</span>
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            {showMusicMenu && (
+                                <div className="absolute left-0 mt-2 w-48 bg-slate-955/95 border border-white/15 rounded shadow-lg py-2 z-50 backdrop-blur-md">
+                                    <button
+                                        onClick={() => {
+                                            toggleMusic();
+                                            setShowMusicMenu(false);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-[10px] uppercase tracking-wider text-slate-200 hover:bg-white/10 hover:text-white transition flex items-center gap-2"
                                     >
-                                        Dashboard
-                                    </Link>
-                                ) : (
-                                    <>
-                                        <Link
-                                            href={route('login')}
-                                            className="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
+                                        {isMusicPlaying ? (
+                                            <>
+                                                <VolumeX className="w-3.5 h-3.5 text-blue-400" />
+                                                <span>Matikan Musik</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Volume2 className="w-3.5 h-3.5 text-blue-400" />
+                                                <span>Aktifkan Musik</span>
+                                            </>
+                                        )}
+                                    </button>
+
+                                    {isMusicPlaying && (
+                                        <button
+                                            onClick={() => {
+                                                changeTrack();
+                                            }}
+                                            className="w-full text-left px-4 py-2 text-[9px] uppercase tracking-wider text-slate-400 hover:bg-white/10 hover:text-white transition flex items-center gap-2 border-t border-white/5"
                                         >
-                                            Log in
-                                        </Link>
-                                        <Link
-                                            href={route('register')}
-                                            className="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-[#FF2D20] dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
-                                        >
-                                            Register
-                                        </Link>
-                                    </>
-                                )}
-                            </nav>
-                        </header>
+                                            <Music className="w-3 h-3 text-blue-400 animate-spin" style={{ animationDuration: '4s' }} />
+                                            <span>Ganti Lagu Lofi</span>
+                                        </button>
+                                    )}
 
-                        <main className="mt-6">
-                            <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
-                                <a
-                                    href="https://laravel.com/docs"
-                                    id="docs-card"
-                                    className="flex flex-col items-start gap-6 overflow-hidden rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] md:row-span-3 lg:p-10 lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]"
-                                >
-                                    <div
-                                        id="screenshot-container"
-                                        className="relative flex w-full flex-1 items-stretch"
-                                    >
-                                        <img
-                                            src="https://laravel.com/assets/img/welcome/docs-light.svg"
-                                            alt="Laravel documentation screenshot"
-                                            className="aspect-video h-full w-full flex-1 rounded-[10px] object-cover object-top drop-shadow-[0px_4px_34px_rgba(0,0,0,0.06)] dark:hidden"
-                                            onError={handleImageError}
-                                        />
-                                        <img
-                                            src="https://laravel.com/assets/img/welcome/docs-dark.svg"
-                                            alt="Laravel documentation screenshot"
-                                            className="hidden aspect-video h-full w-full flex-1 rounded-[10px] object-cover object-top drop-shadow-[0px_4px_34px_rgba(0,0,0,0.25)] dark:block"
-                                        />
-                                        <div className="absolute -bottom-16 -left-16 h-40 w-[calc(100%+8rem)] bg-gradient-to-b from-transparent via-white to-white dark:via-zinc-900 dark:to-zinc-900"></div>
-                                    </div>
-
-                                    <div className="relative flex items-center gap-6 lg:items-end">
-                                        <div
-                                            id="docs-card-content"
-                                            className="flex items-start gap-6 lg:flex-col"
-                                        >
-                                            <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                                <svg
-                                                    className="size-5 sm:size-6"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path
-                                                        fill="#FF2D20"
-                                                        d="M23 4a1 1 0 0 0-1.447-.894L12.224 7.77a.5.5 0 0 1-.448 0L2.447 3.106A1 1 0 0 0 1 4v13.382a1.99 1.99 0 0 0 1.105 1.79l9.448 4.728c.14.065.293.1.447.1.154-.005.306-.04.447-.105l9.453-4.724a1.99 1.99 0 0 0 1.1-1.789V4ZM3 6.023a.25.25 0 0 1 .362-.223l7.5 3.75a.251.251 0 0 1 .138.223v11.2a.25.25 0 0 1-.362.224l-7.5-3.75a.25.25 0 0 1-.138-.22V6.023Zm18 11.2a.25.25 0 0 1-.138.224l-7.5 3.75a.249.249 0 0 1-.329-.099.249.249 0 0 1-.033-.12V9.772a.251.251 0 0 1 .138-.224l7.5-3.75a.25.25 0 0 1 .362.224v11.2Z"
-                                                    />
-                                                    <path
-                                                        fill="#FF2D20"
-                                                        d="m3.55 1.893 8 4.048a1.008 1.008 0 0 0 .9 0l8-4.048a1 1 0 0 0-.9-1.785l-7.322 3.706a.506.506 0 0 1-.452 0L4.454.108a1 1 0 0 0-.9 1.785H3.55Z"
-                                                    />
-                                                </svg>
-                                            </div>
-
-                                            <div className="pt-3 sm:pt-5 lg:pt-0">
-                                                <h2 className="text-xl font-semibold text-black dark:text-white">
-                                                    Documentation
-                                                </h2>
-
-                                                <p className="mt-4 text-sm/relaxed">
-                                                    Laravel has wonderful
-                                                    documentation covering every
-                                                    aspect of the framework.
-                                                    Whether you are a newcomer
-                                                    or have prior experience
-                                                    with Laravel, we recommend
-                                                    reading our documentation
-                                                    from beginning to end.
-                                                </p>
-                                            </div>
+                                    {currentTrack && isMusicPlaying && (
+                                        <div className="px-4 py-1 text-[8px] text-blue-400/80 font-mono tracking-normal truncate border-t border-white/5">
+                                            Playing: {currentTrack.title}
                                         </div>
-
-                                        <svg
-                                            className="size-6 shrink-0 stroke-[#FF2D20]"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            strokeWidth="1.5"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"
-                                            />
-                                        </svg>
-                                    </div>
-                                </a>
-
-                                <a
-                                    href="https://laracasts.com"
-                                    className="flex items-start gap-4 rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]"
-                                >
-                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                        <svg
-                                            className="size-5 sm:size-6"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <g fill="#FF2D20">
-                                                <path d="M24 8.25a.5.5 0 0 0-.5-.5H.5a.5.5 0 0 0-.5.5v12a2.5 2.5 0 0 0 2.5 2.5h19a2.5 2.5 0 0 0 2.5-2.5v-12Zm-7.765 5.868a1.221 1.221 0 0 1 0 2.264l-6.626 2.776A1.153 1.153 0 0 1 8 18.123v-5.746a1.151 1.151 0 0 1 1.609-1.035l6.626 2.776ZM19.564 1.677a.25.25 0 0 0-.177-.427H15.6a.106.106 0 0 0-.072.03l-4.54 4.543a.25.25 0 0 0 .177.427h3.783c.027 0 .054-.01.073-.03l4.543-4.543ZM22.071 1.318a.047.047 0 0 0-.045.013l-4.492 4.492a.249.249 0 0 0 .038.385.25.25 0 0 0 .14.042h5.784a.5.5 0 0 0 .5-.5v-2a2.5 2.5 0 0 0-1.925-2.432ZM13.014 1.677a.25.25 0 0 0-.178-.427H9.101a.106.106 0 0 0-.073.03l-4.54 4.543a.25.25 0 0 0 .177.427H8.4a.106.106 0 0 0 .073-.03l4.54-4.543ZM6.513 1.677a.25.25 0 0 0-.177-.427H2.5A2.5 2.5 0 0 0 0 3.75v2a.5.5 0 0 0 .5.5h1.4a.106.106 0 0 0 .073-.03l4.54-4.543Z" />
-                                            </g>
-                                        </svg>
-                                    </div>
-
-                                    <div className="pt-3 sm:pt-5">
-                                        <h2 className="text-xl font-semibold text-black dark:text-white">
-                                            Laracasts
-                                        </h2>
-
-                                        <p className="mt-4 text-sm/relaxed">
-                                            Laracasts offers thousands of video
-                                            tutorials on Laravel, PHP, and
-                                            JavaScript development. Check them
-                                            out, see for yourself, and massively
-                                            level up your development skills in
-                                            the process.
-                                        </p>
-                                    </div>
-
-                                    <svg
-                                        className="size-6 shrink-0 self-center stroke-[#FF2D20]"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        strokeWidth="1.5"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"
-                                        />
-                                    </svg>
-                                </a>
-
-                                <a
-                                    href="https://laravel-news.com"
-                                    className="flex items-start gap-4 rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] transition duration-300 hover:text-black/70 hover:ring-black/20 focus:outline-none focus-visible:ring-[#FF2D20] lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:text-white/70 dark:hover:ring-zinc-700 dark:focus-visible:ring-[#FF2D20]"
-                                >
-                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                        <svg
-                                            className="size-5 sm:size-6"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <g fill="#FF2D20">
-                                                <path d="M8.75 4.5H5.5c-.69 0-1.25.56-1.25 1.25v4.75c0 .69.56 1.25 1.25 1.25h3.25c.69 0 1.25-.56 1.25-1.25V5.75c0-.69-.56-1.25-1.25-1.25Z" />
-                                                <path d="M24 10a3 3 0 0 0-3-3h-2V2.5a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2V20a3.5 3.5 0 0 0 3.5 3.5h17A3.5 3.5 0 0 0 24 20V10ZM3.5 21.5A1.5 1.5 0 0 1 2 20V3a.5.5 0 0 1 .5-.5h14a.5.5 0 0 1 .5.5v17c0 .295.037.588.11.874a.5.5 0 0 1-.484.625L3.5 21.5ZM22 20a1.5 1.5 0 1 1-3 0V9.5a.5.5 0 0 1 .5-.5H21a1 1 0 0 1 1 1v10Z" />
-                                                <path d="M12.751 6.047h2a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-2A.75.75 0 0 1 12 7.3v-.5a.75.75 0 0 1 .751-.753ZM12.751 10.047h2a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-2A.75.75 0 0 1 12 11.3v-.5a.75.75 0 0 1 .751-.753ZM4.751 14.047h10a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-10A.75.75 0 0 1 4 15.3v-.5a.75.75 0 0 1 .751-.753ZM4.75 18.047h7.5a.75.75 0 0 1 .75.75v.5a.75.75 0 0 1-.75.75h-7.5A.75.75 0 0 1 4 19.3v-.5a.75.75 0 0 1 .75-.753Z" />
-                                            </g>
-                                        </svg>
-                                    </div>
-
-                                    <div className="pt-3 sm:pt-5">
-                                        <h2 className="text-xl font-semibold text-black dark:text-white">
-                                            Laravel News
-                                        </h2>
-
-                                        <p className="mt-4 text-sm/relaxed">
-                                            Laravel News is a community driven
-                                            portal and newsletter aggregating
-                                            all of the latest and most important
-                                            news in the Laravel ecosystem,
-                                            including new package releases and
-                                            tutorials.
-                                        </p>
-                                    </div>
-
-                                    <svg
-                                        className="size-6 shrink-0 self-center stroke-[#FF2D20]"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        strokeWidth="1.5"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"
-                                        />
-                                    </svg>
-                                </a>
-
-                                <div className="flex items-start gap-4 rounded-lg bg-white p-6 shadow-[0px_14px_34px_0px_rgba(0,0,0,0.08)] ring-1 ring-white/[0.05] lg:pb-10 dark:bg-zinc-900 dark:ring-zinc-800">
-                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#FF2D20]/10 sm:size-16">
-                                        <svg
-                                            className="size-5 sm:size-6"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <g fill="#FF2D20">
-                                                <path d="M16.597 12.635a.247.247 0 0 0-.08-.237 2.234 2.234 0 0 1-.769-1.68c.001-.195.03-.39.084-.578a.25.25 0 0 0-.09-.267 8.8 8.8 0 0 0-4.826-1.66.25.25 0 0 0-.268.181 2.5 2.5 0 0 1-2.4 1.824.045.045 0 0 0-.045.037 12.255 12.255 0 0 0-.093 3.86.251.251 0 0 0 .208.214c2.22.366 4.367 1.08 6.362 2.118a.252.252 0 0 0 .32-.079 10.09 10.09 0 0 0 1.597-3.733ZM13.616 17.968a.25.25 0 0 0-.063-.407A19.697 19.697 0 0 0 8.91 15.98a.25.25 0 0 0-.287.325c.151.455.334.898.548 1.328.437.827.981 1.594 1.619 2.28a.249.249 0 0 0 .32.044 29.13 29.13 0 0 0 2.506-1.99ZM6.303 14.105a.25.25 0 0 0 .265-.274 13.048 13.048 0 0 1 .205-4.045.062.062 0 0 0-.022-.07 2.5 2.5 0 0 1-.777-.982.25.25 0 0 0-.271-.149 11 11 0 0 0-5.6 2.815.255.255 0 0 0-.075.163c-.008.135-.02.27-.02.406.002.8.084 1.598.246 2.381a.25.25 0 0 0 .303.193 19.924 19.924 0 0 1 5.746-.438ZM9.228 20.914a.25.25 0 0 0 .1-.393 11.53 11.53 0 0 1-1.5-2.22 12.238 12.238 0 0 1-.91-2.465.248.248 0 0 0-.22-.187 18.876 18.876 0 0 0-5.69.33.249.249 0 0 0-.179.336c.838 2.142 2.272 4 4.132 5.353a.254.254 0 0 0 .15.048c1.41-.01 2.807-.282 4.117-.802ZM18.93 12.957l-.005-.008a.25.25 0 0 0-.268-.082 2.21 2.21 0 0 1-.41.081.25.25 0 0 0-.217.2c-.582 2.66-2.127 5.35-5.75 7.843a.248.248 0 0 0-.09.299.25.25 0 0 0 .065.091 28.703 28.703 0 0 0 2.662 2.12.246.246 0 0 0 .209.037c2.579-.701 4.85-2.242 6.456-4.378a.25.25 0 0 0 .048-.189 13.51 13.51 0 0 0-2.7-6.014ZM5.702 7.058a.254.254 0 0 0 .2-.165A2.488 2.488 0 0 1 7.98 5.245a.093.093 0 0 0 .078-.062 19.734 19.734 0 0 1 3.055-4.74.25.25 0 0 0-.21-.41 12.009 12.009 0 0 0-10.4 8.558.25.25 0 0 0 .373.281 12.912 12.912 0 0 1 4.826-1.814ZM10.773 22.052a.25.25 0 0 0-.28-.046c-.758.356-1.55.635-2.365.833a.25.25 0 0 0-.022.48c1.252.43 2.568.65 3.893.65.1 0 .2 0 .3-.008a.25.25 0 0 0 .147-.444c-.526-.424-1.1-.917-1.673-1.465ZM18.744 8.436a.249.249 0 0 0 .15.228 2.246 2.246 0 0 1 1.352 2.054c0 .337-.08.67-.23.972a.25.25 0 0 0 .042.28l.007.009a15.016 15.016 0 0 1 2.52 4.6.25.25 0 0 0 .37.132.25.25 0 0 0 .096-.114c.623-1.464.944-3.039.945-4.63a12.005 12.005 0 0 0-5.78-10.258.25.25 0 0 0-.373.274c.547 2.109.85 4.274.901 6.453ZM9.61 5.38a.25.25 0 0 0 .08.31c.34.24.616.561.8.935a.25.25 0 0 0 .3.127.631.631 0 0 1 .206-.034c2.054.078 4.036.772 5.69 1.991a.251.251 0 0 0 .267.024c.046-.024.093-.047.141-.067a.25.25 0 0 0 .151-.23A29.98 29.98 0 0 0 15.957.764a.25.25 0 0 0-.16-.164 11.924 11.924 0 0 0-2.21-.518.252.252 0 0 0-.215.076A22.456 22.456 0 0 0 9.61 5.38Z" />
-                                            </g>
-                                        </svg>
-                                    </div>
-
-                                    <div className="pt-3 sm:pt-5">
-                                        <h2 className="text-xl font-semibold text-black dark:text-white">
-                                            Vibrant Ecosystem
-                                        </h2>
-
-                                        <p className="mt-4 text-sm/relaxed">
-                                            Laravel's robust library of
-                                            first-party tools and libraries,
-                                            such as{' '}
-                                            <a
-                                                href="https://forge.laravel.com"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white dark:focus-visible:ring-[#FF2D20]"
-                                            >
-                                                Forge
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://vapor.laravel.com"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Vapor
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://nova.laravel.com"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Nova
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://envoyer.io"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Envoyer
-                                            </a>
-                                            , and{' '}
-                                            <a
-                                                href="https://herd.laravel.com"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Herd
-                                            </a>{' '}
-                                            help you take your projects to the
-                                            next level. Pair them with powerful
-                                            open source libraries like{' '}
-                                            <a
-                                                href="https://laravel.com/docs/billing"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Cashier
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://laravel.com/docs/dusk"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Dusk
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://laravel.com/docs/broadcasting"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Echo
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://laravel.com/docs/horizon"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Horizon
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://laravel.com/docs/sanctum"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Sanctum
-                                            </a>
-                                            ,{' '}
-                                            <a
-                                                href="https://laravel.com/docs/telescope"
-                                                className="rounded-sm underline hover:text-black focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FF2D20] dark:hover:text-white"
-                                            >
-                                                Telescope
-                                            </a>
-                                            , and more.
-                                        </p>
-                                    </div>
+                                    )}
                                 </div>
-                            </div>
-                        </main>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-3 cursor-pointer">
+                            <img src="images/KEP.png" alt="Logo KEP" className="w-8 h-8 rounded-full" />
+                            <span className="text-sm font-black tracking-[0.3em] uppercase text-slate-900 dark:text-white">XYNORA</span>
+                        </div>
+                        <div className="text-xs border-b border-white/40 pb-0.5 cursor-pointer hover:text-white transition">AKTUALITAS ◆</div>
+                    </div>
 
-                        <footer className="py-16 text-center text-sm text-black dark:text-white/70">
-                            Laravel v{laravelVersion} (PHP v{phpVersion})
-                        </footer>
+                    {/* Bagian Tengah: Judul Besar & Pintu Misterius */}
+                    <div className="relative flex flex-col items-center justify-center text-center px-4 w-full max-w-4xl flex-1">
+
+                        {/* Pintu Gerbang */}
+                        <div
+                            ref={gateDoorRef}
+                            className="absolute w-72 h-96 sm:w-80 sm:h-[420px] bg-blue-200 border-4 border-slate-900/40 rounded-t-xl shadow-2xl flex flex-col items-center justify-start p-4 bg-cover bg-blend-multiply will-change-transform z-0 gate-fade-in opacity-0"
+                            style={{
+                                backgroundImage: `url('https://images.unsplash.com/photo-1700581182740-dd9d3ad180cc?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')`,
+                                boxShadow: '0 0 80px rgba(0,0,0,0.8) inset'
+                            }}
+                        >
+                            <div className="border border-blue-500/20 px-3 py-1 rounded text-[10px] tracking-widest text-blue-200/80 uppercase font-mono mt-4 bg-black/40">
+                                Go To Menu
+                            </div>
+                        </div>
+
+                        {/* Konten Teks & Tombol utama */}
+                        <div ref={gateContentRef} className="relative z-10 flex flex-col items-center gate-fade-in opacity-0 will-change-transform">
+                            <h1 className="text-4xl sm:text-7xl font-black tracking-widest text-white uppercase drop-shadow-lg mb-6 selection:bg-blue-500">
+                                WELCOME REASERCHERS
+                            </h1>
+
+                            <button
+                                onClick={handleEnterPortal}
+                                className="mt-24 px-8 py-4 bg-slate-955/90 hover:bg-white hover:text-black text-white border border-white/30 rounded font-serif tracking-widest text-xs drop-shadow-lg uppercase transition-all duration-300 shadow-2xl backdrop-blur-sm flex items-center gap-3 group"
+                            >
+                                JELAJAHI KODE ETIK
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Footer Bawah Gerbang */}
+                    <div
+                        onClick={handleEnterPortal}
+                        className="pb-8 text-[11px] text-white/50 tracking-[0.3em] uppercase animate-bounce gate-fade-in opacity-0 cursor-pointer hover:text-white transition"
+                    >
+                        SCROLL UNTUK MENJELAJAH ↓
                     </div>
                 </div>
+            )}
+
+            {/* --- 3. HALAMAN UTAMA: TORII STUDIO LAYOUT & AESTHETIC --- */}
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-sans transition-colors duration-300 overflow-x-hidden selection:bg-blue-600 selection:text-white">
+
+                {/* --- HEADER NAVBAR --- */}
+                <header className="sticky top-0 z-50 bg-slate-50/10 dark:bg-slate-955/80 backdrop-blur-md border-b border-slate-200 dark:border-white/5 px-4 sm:px-8 lg:px-16">
+                    <div className="max-w-7xl mx-auto h-20 flex items-center justify-between">
+
+                        {/* Logo */}
+                        <div className="flex items-center gap-3 cursor-pointer">
+                            <img src="images/KEP.png" alt="Logo KEP" className="w-8 h-8 rounded-full" />
+                            <span className="text-sm font-black tracking-[0.3em] uppercase text-slate-900 dark:text-white">XYNORA</span>
+                        </div>
+
+                        {/* Navigation Links (torii.studio style with smooth scroll) */}
+                        <nav className="hidden md:flex gap-8 font-mono text-[11px] font-bold tracking-[0.2em] uppercase text-black dark:text-white">
+                            <a href="#prinsip" onClick={(e) => handleNavClick(e, 'prinsip')} className="hover:text-blue-600 dark:hover:text-blue-400 transition">Layanan KEP</a>
+                            <a href="#alur" onClick={(e) => handleNavClick(e, 'alur')} className="hover:text-blue-600 dark:hover:text-blue-400 transition">Alur Telaah</a>
+                            <a href="#download" onClick={(e) => handleNavClick(e, 'download')} className="hover:text-blue-600 dark:hover:text-blue-400 transition">Template</a>
+                            <a href="#kontak" onClick={(e) => handleNavClick(e, 'kontak')} className="hover:text-blue-600 dark:hover:text-blue-400 transition">Tentang Kami</a>
+                        </nav>
+
+                        {/* CTA Buttons / Actions */}
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={toggleTheme}
+                                className="p-2 rounded-full border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition"
+                                aria-label="Toggle Dark Mode"
+                            >
+                                {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-blue-600" />}
+                            </button>
+
+                            {auth.user ? (
+                                <Link
+                                    href={route('dashboard')}
+                                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded font-mono text-[10px] font-bold tracking-wider uppercase transition shadow-lg shadow-blue-500/25 flex items-center gap-2 group"
+                                >
+                                    Dashboard <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition" />
+                                </Link>
+                            ) : (
+                                <>
+                                    <Link
+                                        href={route('login')}
+                                        className="text-xs font-mono font-bold tracking-wider uppercase text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition hidden sm:inline"
+                                    >
+                                        Log in
+                                    </Link>
+                                    <Link
+                                        href={route('register')}
+                                        className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded font-mono text-[10px] font-bold tracking-wider uppercase transition shadow-lg shadow-blue-500/25 flex items-center gap-1.5 group"
+                                    >
+                                        Ajukan Proposal <span className="group-hover:translate-x-0.5 transition-transform duration-300">↗</span>
+                                    </Link>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </header>
+
+                {/* --- HERO SECTION: TORII STUDIO INSPIRED SIDE-BY-SIDE --- */}
+                <section ref={heroSectionRef} className="relative min-h-[calc(100vh-80px)] flex items-center px-4 sm:px-8 lg:px-16 py-16 max-w-7xl mx-auto">
+
+                    {/* Parallax Background Grid / Dots */}
+                    <div
+                        ref={parallaxBgRef}
+                        className="absolute inset-0 pointer-events-none opacity-20 transition-transform duration-75 ease-out will-change-transform bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px]"
+                    ></div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center w-full relative z-10">
+
+                        {/* Left Side: Headline Copy */}
+                        <div ref={parallaxContentRef} className="lg:col-span-7 flex flex-col items-start text-left transition-transform duration-75 will-change-transform">
+                            <h1 className="hero-element opacity-0 text-5xl sm:text-6xl lg:text-[76px] font-black tracking-tight text-slate-900 dark:text-white leading-[1.05] mb-6">
+                                Start Your <br/>
+                                <span className="text-transparent bg-clip-text bg-blue-600 dark:bg-blue-400">Research</span>
+                            </h1>
+                            <p className="hero-element opacity-0 text-slate-600 dark:text-slate-400 text-lg sm:text-xl font-light leading-relaxed max-w-xl mb-12">
+                                Kami membantu akademisi dan praktisi mempercepat penelaahan etik proposal riset melalui platform digital yang aman, transparan, dan berstandar internasional.
+                            </p>
+
+                            {/* Interactive Rotating CTA Button */}
+                            <div className="hero-element opacity-0 flex items-center gap-6">
+                                <Link
+                                    href={auth.user ? route('dashboard') : route('register')}
+                                    className="relative w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center cursor-pointer group"
+                                >
+                                    {/* Rotating Text path */}
+                                    <svg viewBox="0 0 100 100" className="absolute w-full h-full animate-spin" style={{ animationDuration: '12s' }}>
+                                        <defs>
+                                            <path
+                                                id="circlePath"
+                                                d="M 50, 50 m -37, 0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0"
+                                            />
+                                        </defs>
+                                        <text className="font-mono text-[6.5px] font-bold tracking-[0.24em] fill-slate-500 dark:fill-slate-400 uppercase">
+                                            <textPath href="#circlePath">
+                                                AJUKAN SEKARANG ◆ LAIK ETIK ◆ MULAI PROPOSAL ◆ KEP DIGITAL ◆
+                                            </textPath>
+                                        </text>
+                                    </svg>
+
+                                    {/* Center Arrow Circle */}
+                                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-600 group-hover:bg-blue-500 flex items-center justify-center shadow-xl shadow-blue-600/30 group-hover:scale-105 transition-all duration-300 z-10">
+                                        <span className="text-white text-2xl font-bold group-hover:translate-x-1 transition-transform duration-300">→</span>
+                                    </div>
+                                </Link>
+
+                                <div className="hidden sm:block">
+                                    <span className="font-mono text-[10px] font-bold tracking-[0.2em] uppercase text-slate-500 block mb-1">PROSES PENGAJUAN</span>
+                                    <a href="#alur" onClick={(e) => handleNavClick(e, 'alur')} className="text-sm text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition font-medium border-b border-slate-300 dark:border-white/10 pb-0.5">
+                                        Pelajari detail 4 langkah telaah →
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right Side: Masked Interactive Canvas Particle Visualizer */}
+                        <div className="lg:col-span-5 flex justify-center lg:justify-end hero-element opacity-0 relative">
+
+                            {/* Decorative blueprint grids in background */}
+                            <div
+                                ref={parallaxOfficeLayerRef}
+                                className="absolute -top-10 -left-10 w-48 h-48 border border-slate-200 dark:border-white/5 rounded-full pointer-events-none transition-transform duration-75 will-change-transform hidden lg:block"
+                                style={{
+                                    backgroundImage: 'radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px)',
+                                    backgroundSize: '16px 16px'
+                                }}
+                            ></div>
+
+                            <div className="relative w-80 h-80 sm:w-[420px] sm:h-[420px] rounded-full overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl bg-white dark:bg-slate-900/60 backdrop-blur-sm group cursor-crosshair">
+
+                                {/* Live interactive canvas */}
+                                <canvas
+                                    ref={canvasRef}
+                                    className="absolute inset-0 w-full h-full block z-10"
+                                />
+
+                                {/* Glass overlay ring */}
+                                <div className="absolute inset-0 border-2 border-slate-200 dark:border-white/10 rounded-full pointer-events-none z-20 group-hover:border-blue-500/20 transition-colors duration-500"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* --- STATISTIK --- */}
+                <section ref={statsRef} className="py-20 border-y border-slate-200 dark:border-white/5 bg-slate-55 dark:bg-slate-950/50">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-8 grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+                        <div className="p-4">
+                            <p className="text-5xl lg:text-6xl font-black text-blue-600 dark:text-blue-500 mb-3 tracking-tight">
+                                <span ref={stat1Ref}>0</span>+
+                            </p>
+                            <p className="text-slate-500 dark:text-slate-400 font-mono text-xs tracking-widest uppercase">Proposal Riset Direview</p>
+                        </div>
+                        <div className="p-4">
+                            <p className="text-5xl lg:text-6xl font-black text-blue-600 dark:text-blue-500 mb-3 tracking-tight">
+                                <span ref={stat2Ref}>0</span>
+                            </p>
+                            <p className="text-slate-500 dark:text-slate-400 font-mono text-xs tracking-widest uppercase">Reviewer Ahli Aktif</p>
+                        </div>
+                        <div className="p-4">
+                            <p className="text-5xl lg:text-6xl font-black text-sky-500 dark:text-sky-400 mb-3 tracking-tight">
+                                &lt;<span ref={stat3Ref}>0</span> Hari
+                            </p>
+                            <p className="text-slate-500 dark:text-slate-400 font-mono text-xs tracking-widest uppercase">Rata-rata Waktu Proses</p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* --- OUR PILLARS (TORII STUDIO PILLARS COPY & STYLE) --- */}
+                <section id="prinsip" ref={principlesRef} className="py-32 px-4 sm:px-8 lg:px-16 max-w-7xl mx-auto">
+                    <div className="flex flex-col lg:flex-row justify-between items-start gap-12 mb-24">
+                        <div className="lg:w-1/2">
+                            <span className="font-mono text-[10px] font-black tracking-[0.35em] text-blue-600 dark:text-blue-500 uppercase block mb-3">LAYANAN UTAMA</span>
+                            <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
+                                Pilar Integritas <br/>Penelitian KEP Digital
+                            </h2>
+                        </div>
+                        <p className="lg:w-1/2 text-slate-600 dark:text-slate-400 text-lg font-light leading-relaxed">
+                            Kami menggabungkan inovasi teknologi sistem telaah, kerangka kerja terstandarisasi, serta kepatuhan hukum untuk melahirkan penelitian berintegritas.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+
+                        {/* Pillar 01 */}
+                        <div className="principle-card scroll-animate transform transition duration-700 ease-out opacity-0 translate-y-10 border-t border-slate-200 dark:border-white/10 pt-10 group hover:border-blue-600 dark:hover:border-blue-500 transition-colors duration-500">
+                            <span className="text-5xl font-black text-slate-200 dark:text-blue-900 group-hover:text-blue-600 dark:group-hover:text-blue-500 font-mono transition-colors duration-500 block mb-8">01</span>
+                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                Telaah Cepat &amp; Akurat
+                            </h3>
+                            <p className="text-slate-600 dark:text-slate-400 font-light leading-relaxed">
+                                Evaluasi berkas pengajuan secara digital oleh komite etik internal dan penelaah independen (Exempted, Expedited, maupun Full Board).
+                            </p>
+                        </div>
+
+                        {/* Pillar 02 */}
+                        <div className="principle-card scroll-animate transform transition duration-700 ease-out opacity-0 translate-y-10 border-t border-slate-200 dark:border-white/10 pt-10 group hover:border-blue-600 dark:hover:border-blue-500 transition-colors duration-500">
+                            <span className="text-5xl font-black text-slate-200 dark:text-blue-900 group-hover:text-blue-600 dark:group-hover:text-blue-500 font-mono transition-colors duration-500 block mb-8">02</span>
+                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                Perlindungan Subjek Riset
+                            </h3>
+                            <p className="text-slate-600 dark:text-slate-400 font-light leading-relaxed">
+                                Menjamin penerapan informed consent secara eksplisit, asas kebermanfaatan subjek manusia, serta standarisasi kesejahteraan hewan coba.
+                            </p>
+                        </div>
+
+                        {/* Pillar 03 */}
+                        <div className="principle-card scroll-animate transform transition duration-700 ease-out opacity-0 translate-y-10 border-t border-slate-200 dark:border-white/10 pt-10 group hover:border-blue-600 dark:hover:border-blue-500 transition-colors duration-500">
+                            <span className="text-5xl font-black text-slate-200 dark:text-blue-900 group-hover:text-blue-600 dark:group-hover:text-blue-500 font-mono transition-colors duration-500 block mb-8">03</span>
+                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                Standarisasi CIOMS &amp; WHO
+                            </h3>
+                            <p className="text-slate-600 dark:text-slate-400 font-light leading-relaxed">
+                                Seluruh instrumen penelaahan disinkronisasikan langsung dengan regulasi nasional KEPK dan panduan etika riset global.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* --- CASE STUDIES / WORK: PORTFOLIO GRID --- */}
+                <section id="alur" className="py-32 border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-950/40 px-4 sm:px-8 lg:px-16">
+                    <div className="max-w-7xl mx-auto">
+
+                        <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
+                            <div>
+                                <span className="font-mono text-[10px] font-black tracking-[0.35em] text-blue-600 dark:text-blue-500 uppercase block mb-3">ALUR TELAAH</span>
+                                <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white">4 Langkah Digital</h2>
+                            </div>
+                            <span className="text-slate-500 dark:text-slate-400 text-sm font-mono uppercase tracking-wider">
+                                Proses Online Penuh Tanpa Kertas
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                            {[
+                                { step: '01', title: 'Registrasi & Akun', desc: 'Peneliti mendaftarkan akun dan memverifikasi institusi asal secara online.' },
+                                { step: '02', title: 'Unggah Proposal', desc: 'Mengisi form protokol riset digital dan mengunggah dokumen informed consent.' },
+                                { step: '03', title: 'Evaluasi Komite', desc: 'Proses penelaahan berkas oleh tim penelaah ahli secara transparan.' },
+                                { step: '04', title: 'Kelayakan Etik', desc: 'Penerbitan surat keterangan laik etik (Ethical Clearance) berformat digital.' }
+                            ].map((item, idx) => (
+                                <div key={idx} className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 rounded-2xl p-8 hover:border-blue-600/30 dark:hover:border-blue-500/30 transition-all duration-300 hover:-translate-y-1 group shadow-sm dark:shadow-none scroll-animate transform transition duration-700 ease-out opacity-0 translate-y-10">
+                                    <span className="text-3xl font-black text-blue-600/20 dark:text-blue-500/20 group-hover:text-blue-600 dark:group-hover:text-blue-500 transition-colors font-mono block mb-6">{item.step}</span>
+                                    <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{item.title}</h4>
+                                    <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed font-light">{item.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* --- DOWNLOAD TEMPLATE HUB --- */}
+                <section id="download" className="py-32 px-4 sm:px-8 lg:px-16 max-w-7xl mx-auto">
+                <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-950 border border-slate-200 dark:border-white/15 rounded-3xl p-8 sm:p-16 text-center relative overflow-hidden shadow-sm dark:shadow-none scroll-animate transform transition duration-700 ease-out opacity-0 translate-y-10">
+                    <div className="relative z-10 max-w-2xl mx-auto">
+                        <span className="font-mono text-[10px] font-black tracking-[0.35em] text-blue-600 dark:text-blue-500 block mb-3">
+                            PUSAT UNDUHAN
+                        </span>
+
+                        <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-4">
+                            Template Berkas Administrasi
+                        </h2>
+
+                        <p className="mb-10 text-slate-600 dark:text-slate-400 font-light leading-relaxed">
+                            Persiapkan berkas kelengkapan protokol riset Anda sebelum
+                            mendaftar agar mempercepat proses review oleh komite kami.
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <a
+                                href="/documents/panduan-pengusulan.docx"
+                                download
+                                className="px-8 py-4 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded font-semibold transition flex items-center justify-center gap-2 shadow-sm"
+                            >
+                                <FileText className="w-5 h-5 text-blue-600" />
+                                Panduan Pengusulan
+                            </a>
+
+                            <a
+                                href="/documents/ringkasan-protokol.docx"
+                                download
+                                className="px-8 py-4 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded font-semibold transition flex items-center justify-center gap-2 shadow-sm"
+                            >
+                                <FileText className="w-5 h-5 text-blue-600" />
+                                Ringkasan Protokol
+                            </a>
+
+                            <a
+                                href="/documents/formulir-pengajuan.docx"
+                                download
+                                className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold transition flex items-center justify-center gap-2 shadow-lg"
+                            >
+                                <FileText className="w-5 h-5 text-white" />
+                                Formulir Pengajuan
+                            </a>
+                        </div>
+
+                        <p className="mt-5 text-xs text-slate-500 dark:text-slate-500 font-light">
+                            Baca <span className="font-semibold text-slate-700 dark:text-slate-300">Panduan Pengusulan</span> terlebih dahulu untuk memahami ketentuan &amp; prosedur, lalu lengkapi kedua formulir.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+                {/* --- FOOTER GET IN TOUCH (TORII STUDIO EMAIL/PHONE LAYOUT) --- */}
+                <footer id="kontak" className="bg-slate-100 dark:bg-slate-950 border-t border-slate-200 dark:border-white/5 py-24 px-4 sm:px-8 lg:px-16">
+                    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16">
+
+                        {/* Left Side: Large Get in Touch */}
+                        <div className="lg:col-span-6">
+                            <span className="font-mono text-[10px] font-black tracking-[0.35em] text-blue-600 dark:text-blue-500 uppercase block mb-3">CONTACT US</span>
+                            <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white mb-6">Hubungi Kami</h2>
+                            <p className="text-slate-600 dark:text-slate-400 text-lg font-light leading-relaxed max-w-md mb-8">
+                                Butuh panduan pengajuan atau memiliki pertanyaan terkait regulasi etik penelitian? Hubungi sekretariat KEP kami.
+                            </p>
+
+                            {/* Contact Links */}
+                            <div className="space-y-4">
+                                <a href="mailto:@institusi.ac.id" className="block text-2xl sm:text-3xl font-black text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition tracking-tight">
+                                    xynoraethic@institusi.ac.id
+                                </a>
+                                <a href="tel:0211234567" className="block text-xl font-bold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition font-mono">
+                                    (081) 328947127
+                                </a>
+                            </div>
+                        </div>
+
+                        {/* Right Side: Quick Links & Location */}
+                        <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-12 lg:pl-12">
+                            <div>
+                                <h4 className="font-mono text-[10px] font-black tracking-widest text-slate-400 dark:text-slate-500 uppercase mb-6">Tautan Cepat</h4>
+                                <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400 font-light">
+                                    <li><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Tentang Komisi Etik</a></li>
+                                    <li><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Panduan Peneliti</a></li>
+                                    <li><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition">FAQ &amp; Bantuan</a></li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <h4 className="font-mono text-[10px] font-black tracking-widest text-slate-400 dark:text-slate-500 uppercase mb-6">Sekretariat KEP</h4>
+                                <address className="text-sm text-slate-600 dark:text-slate-400 font-light leading-relaxed not-italic">
+                                    Gedung Rektorat Lt. 3,<br/>
+                                    Kampus Utama Universitas,<br/>
+                                    Jakarta, Indonesia
+                                </address>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="max-w-7xl mx-auto mt-24 pt-8 border-t border-slate-200 dark:border-white/5 flex flex-col sm:flex-row justify-between items-center text-sm text-slate-500 font-light gap-4">
+                        <div>
+                            &copy; {new Date().getFullYear()} Komisi Etik Penelitian. All rights reserved.
+                        </div>
+                        <div className="flex gap-6">
+                            <a href="#" className="hover:text-slate-500">Privacy Policy</a>
+                            <a href="#" className="hover:text-slate-500">Terms of Service</a>
+                        </div>
+                    </div>
+                </footer>
             </div>
         </>
     );

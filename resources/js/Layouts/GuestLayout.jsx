@@ -1,17 +1,23 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Link } from '@inertiajs/react';
+import { ShieldCheck } from 'lucide-react';
 
 export default function GuestLayout({ children }) {
     return (
-        <div className="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0 dark:bg-gray-900">
-            <div>
-                <Link href="/">
-                    <ApplicationLogo className="h-20 w-20 fill-current text-gray-500" />
+        <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 pt-6 sm:pt-0 dark:bg-slate-900 transition-colors duration-300 font-sans text-slate-800 dark:text-slate-200 px-4">
+            <div className="mb-8">
+                <Link href="/" className="flex flex-col items-center gap-3">
+                    {/* Placeholder Logo yang bisa diganti nanti */}
+                    <div className="flex items-center gap-3 cursor-pointer">
+                            <img src="images/KEP.png" alt="Logo KEP" className="w-8 h-8 rounded-full" />
+                        </div>
+                    <span className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">XYNORA</span>
                 </Link>
             </div>
 
-            <div className="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg dark:bg-gray-800">
-                {children}
+            <div className="w-full sm:max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="w-full overflow-hidden bg-white px-8 py-10 shadow-xl sm:rounded-2xl dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                    {children}
+                </div>
             </div>
         </div>
     );
