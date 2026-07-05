@@ -1,12 +1,12 @@
 import { Link, usePage } from '@inertiajs/react';
-import { 
-    LayoutDashboard, 
-    FileText, 
-    History, 
-    FolderOpen, 
-    MessageSquare, 
-    User, 
-    HelpCircle, 
+import {
+    LayoutDashboard,
+    FileText,
+    History,
+    FolderOpen,
+    MessageSquare,
+    User,
+    HelpCircle,
     LogOut,
     UserCheck,
     ClipboardCheck,
@@ -32,7 +32,7 @@ export default function Sidebar() {
 
     const isActive = (routeName) => {
         return route().current(routeName) || route().current(routeName + '.*')
-            ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10' 
+            ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
             : 'text-gray-400 hover:bg-gray-800 hover:text-white';
     };
 
@@ -248,11 +248,9 @@ export default function Sidebar() {
         <aside className="w-64 h-screen fixed top-0 left-0 bg-[#0f172a] text-white flex flex-col z-50 border-r border-slate-800">
             {/* Header / Logo */}
             <div className="h-20 flex items-center px-6 border-b border-slate-800 gap-3">
-                <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-sm text-white shadow-lg shadow-blue-500/20">
-                    KEP
-                </div>
+                    <img src="../images/KEP.png" alt="Logo KEP" className="w-9 h-9 rounded-full" />
                 <div className="flex flex-col">
-                    <span className="text-sm font-bold tracking-wide uppercase leading-none">Sistem KEP</span>
+                    <span className="text-sm font-bold tracking-wide uppercase leading-none">XYNORA</span>
                     <span className="text-[10px] text-gray-500 font-semibold mt-0.5 uppercase tracking-wider">{activeRole} Portal</span>
                 </div>
             </div>
