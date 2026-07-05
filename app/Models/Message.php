@@ -17,6 +17,18 @@ class Message extends Model
         'is_read',
     ];
 
+    protected static function booted()
+    {
+        static::created(function ($message) {
+            try {
+                $emailService = app(\App\Services\EmailJsService::class);
+                $emailService->sendNotification($message);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to trigger EmailJS service: " . $e->getMessage());
+            }
+        });
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

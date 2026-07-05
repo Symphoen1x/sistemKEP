@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Message;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -53,6 +54,14 @@ class RegisteredUserController extends Controller
         ]);
 
         event(new Registered($user));
+
+        // Create Message to trigger EmailJS registration confirmation
+        Message::create([
+            'user_id' => $user->id,
+            'sender_name' => 'Sekretariat KEP',
+            'subject' => 'Pendaftaran Akun Sistem KEP Berhasil',
+            'body' => "Halo {$user->name},\n\nPendaftaran akun Anda berhasil dilakukan. Saat ini akun Anda sedang menunggu proses verifikasi dan aktivasi oleh Sekretariat.\n\nKami akan mengirimkan notifikasi email kembali setelah akun Anda disetujui.",
+        ]);
 
         // Note: We deliberately do not auto-login the user because their account is pending approval.
         // Auth::login($user);
