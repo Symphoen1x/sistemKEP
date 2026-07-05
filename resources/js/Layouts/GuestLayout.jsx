@@ -7,10 +7,10 @@ export default function GuestLayout({ children }) {
             <div className="mb-8">
                 <Link href="/" className="flex flex-col items-center gap-3">
                     {/* Placeholder Logo yang bisa diganti nanti */}
-                    <div className="p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-100 dark:border-slate-700">
-                        <ShieldCheck className="h-12 w-12 text-indigo-700 dark:text-indigo-400" />
-                    </div>
-                    <span className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Sistem KEP</span>
+                    <div className="flex items-center gap-3 cursor-pointer">
+                            <img src="images/KEP.png" alt="Logo KEP" className="w-8 h-8 rounded-full" />
+                        </div>
+                    <span className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">XYNORA</span>
                 </Link>
             </div>
 
