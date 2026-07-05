@@ -29,7 +29,7 @@ export default function PengajuanAmendment({ proposal }) {
 
                 <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-30">
                     <div className="flex items-center gap-4">
-                        <Link href={route('applicant.riwayat')} className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition">
+                        <Link href={route('applicant.trackStatus')} className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition">
                             <ArrowLeft className="w-5 h-5" />
                         </Link>
                         <div>
@@ -146,7 +146,7 @@ export default function PengajuanAmendment({ proposal }) {
 
                         <div className="flex gap-3 pt-2">
                             <Link
-                                href={route('applicant.riwayat')}
+                                href={route('applicant.trackStatus')}
                                 className="flex-1 py-3 px-4 rounded-xl border border-gray-300 text-gray-700 font-semibold text-center text-sm hover:bg-gray-50 transition"
                             >
                                 Batal

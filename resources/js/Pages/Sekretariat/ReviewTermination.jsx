@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm, Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import { ShieldOff, CheckCircle, XCircle, Clock, ShieldAlert } from 'lucide-react';
 
@@ -19,22 +19,24 @@ const reasonColors = {
 export default function ReviewTermination({ terminations }) {
     const [selectedId, setSelectedId] = useState(null);
     const [filter, setFilter] = useState('all');
-    const { post, processing, reset } = useForm({ status: '', notes: '' });
+    const [processing, setProcessing] = useState(false);
 
     const filtered = filter === 'all' ? terminations : terminations.filter(t => t.status === filter);
 
     const handleFinalize = (id, status) => {
         if (!confirm(`Yakin ${status === 'Approved' ? 'menyetujui' : 'menolak'} terminasi ini?`)) return;
-        post(route('sekretariat.terminations.finalize', id), {
-            data: { status, notes: '' },
-            onSuccess: () => { reset(); setSelectedId(null); },
+        router.post(route('sekretariat.terminations.finalize', id), { status, notes: '' }, {
+            onStart: () => setProcessing(true),
+            onFinish: () => setProcessing(false),
+            onSuccess: () => setSelectedId(null),
         });
     };
 
     const handleClassify = (id, category) => {
-        post(route('sekretariat.terminations.classify', id), {
-            data: { reason_category: category },
+        router.post(route('sekretariat.terminations.classify', id), { reason_category: category }, {
             preserveScroll: true,
+            onStart: () => setProcessing(true),
+            onFinish: () => setProcessing(false),
         });
     };
 

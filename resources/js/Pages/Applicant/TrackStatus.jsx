@@ -1,6 +1,6 @@
 import Sidebar from '@/Components/Sidebar';
 import { Head, Link } from '@inertiajs/react';
-import { FileText, Clock, CheckCircle, XCircle, AlertCircle, RefreshCw, Upload } from 'lucide-react';
+import { FileText, Clock, CheckCircle, XCircle, AlertCircle, RefreshCw, Upload, FilePenLine, ShieldOff } from 'lucide-react';
 
 export default function TrackStatus({ proposals }) {
     const getStatusConfig = (status) => {
@@ -61,6 +61,7 @@ export default function TrackStatus({ proposals }) {
                         proposals.map((proposal) => {
                             const statusCfg = getStatusConfig(proposal.status);
                             const canRevisi = ['Revisi', 'AWR'].includes(proposal.status);
+            const canAction = proposal.status === 'Disetujui';
 
                             return (
                                 <div key={proposal.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -153,6 +154,26 @@ export default function TrackStatus({ proposals }) {
                                             >
                                                 <Upload className="w-4 h-4" />
                                                 Unggah Perbaikan
+                                            </Link>
+                                        </div>
+                                    )}
+
+                                    {/* Tombol Aksi (Amendment & Termination) */}
+                                    {canAction && (
+                                        <div className="mb-4 flex flex-wrap gap-3">
+                                            <Link
+                                                href={route('applicant.amendment.create', proposal.id)}
+                                                className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold rounded-xl transition"
+                                            >
+                                                <FilePenLine className="w-4 h-4" />
+                                                Ajukan Amendment
+                                            </Link>
+                                            <Link
+                                                href={route('applicant.termination.create', proposal.id)}
+                                                className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-xl transition"
+                                            >
+                                                <ShieldOff className="w-4 h-4" />
+                                                Ajukan Termination
                                             </Link>
                                         </div>
                                     )}

@@ -17,7 +17,7 @@ import {
 } from 'recharts';
 import { Layers, CheckCircle, TrendingUp, Users, FileDown, FileSpreadsheet } from 'lucide-react';
 
-export default function Laporan({ chartData = [], distribution = [], reviewerPerformance = [] }) {
+export default function Laporan({ chartData = [], distribution = [], reviewerPerformance = [], exportPdfRoute = '#', exportCsvRoute = '#' }) {
     const COLORS = ['#2563EB', '#EF4444', '#F59E0B', '#8B5CF6', '#6B7280'];
 
     return (
@@ -33,11 +33,11 @@ export default function Laporan({ chartData = [], distribution = [], reviewerPer
                         <p className="text-xs text-gray-500 font-medium">Rekapitulasi berkas masuk, performa penelaah, dan status kelayakan etik</p>
                     </div>
                     <div className="flex gap-2">
-                        <a href={route('sekretariat.laporan.exportPdf')}
+                        <a href={exportPdfRoute}
                             className="flex items-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-semibold transition">
                             <FileDown className="w-3.5 h-3.5" /> Export PDF
                         </a>
-                        <a href={route('sekretariat.laporan.exportCsv')}
+                        <a href={exportCsvRoute}
                             className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-semibold transition">
                             <FileSpreadsheet className="w-3.5 h-3.5" /> Export CSV
                         </a>

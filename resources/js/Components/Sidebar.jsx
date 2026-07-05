@@ -71,6 +71,11 @@ export default function Sidebar() {
                     route: 'admin.config.index',
                 },
                 {
+                    label: 'Laporan & Statistik',
+                    icon: TrendingUp,
+                    route: 'admin.laporan',
+                },
+                {
                     label: 'Audit Log',
                     icon: ClipboardList,
                     route: 'admin.audit-log.index',
@@ -195,6 +200,11 @@ export default function Sidebar() {
                     route: 'ketua.terminations.eskalasi',
                 },
                 {
+                    label: 'Laporan & Statistik',
+                    icon: TrendingUp,
+                    route: 'ketua.laporan',
+                },
+                {
                     label: 'Profil Akun',
                     icon: User,
                     route: 'ketua.profil',
@@ -214,9 +224,9 @@ export default function Sidebar() {
                     route: 'applicant.pengajuan',
                 },
                 {
-                    label: 'Riwayat Pengajuan',
+                    label: 'Status & Riwayat',
                     icon: History,
-                    route: 'applicant.riwayat',
+                    route: 'applicant.trackStatus',
                 },
                 {
                     label: 'Unduh Dokumen',

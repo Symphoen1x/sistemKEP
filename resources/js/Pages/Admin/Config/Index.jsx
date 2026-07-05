@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { useForm, usePage } from '@inertiajs/react';
+import { usePage, Head, router } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
-import { Head } from '@inertiajs/react';
 import { Settings, Save, Check } from 'lucide-react';
 
 const groupLabels = {
@@ -20,14 +19,15 @@ export default function Index({ configs }) {
         return flat;
     });
 
-    const { post, processing } = useForm({});
+    const [processing, setProcessing] = useState(false);
 
     const handleSave = (e) => {
         e.preventDefault();
         const configsArray = Object.entries(localConfigs).map(([key, value]) => ({ key, value }));
-        post(route('admin.config.update'), {
-            data: { configs: configsArray },
-            onSuccess: () => {},
+        
+        router.post(route('admin.config.update'), { configs: configsArray }, {
+            onStart: () => setProcessing(true),
+            onFinish: () => setProcessing(false)
         });
     };
 

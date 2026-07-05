@@ -83,7 +83,7 @@ class TerminationController extends Controller
             }
         }
 
-        return redirect()->route('applicant.riwayat')
+        return redirect()->route('applicant.trackStatus')
             ->with('status', 'Pengajuan Terminasi berhasil dikirim.');
     }
 

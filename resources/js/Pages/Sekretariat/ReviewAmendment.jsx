@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm, Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import { FileEdit, CheckCircle, XCircle, Clock, AlertCircle, Filter, UserCheck, ShieldCheck } from 'lucide-react';
 
@@ -18,22 +18,24 @@ export default function ReviewAmendment({ amendments, reviewers = [] }) {
     const [selectedId, setSelectedId] = useState(null);
     const [filter, setFilter] = useState('all');
     const [selectedReviewer, setSelectedReviewer] = useState('');
-    const { post, processing, reset } = useForm({ status: '', notes: '' });
+    const [processing, setProcessing] = useState(false);
 
     const filtered = filter === 'all' ? amendments : amendments.filter(a => a.status === filter);
 
     const handleDecide = (id, status) => {
         if (!confirm(`Yakin ${status === 'Approved' ? 'menyetujui' : 'menolak'} amendment ini?`)) return;
-        post(route('sekretariat.amendments.decide', id), {
-            data: { status, notes: '' },
-            onSuccess: () => { reset(); setSelectedId(null); },
+        router.post(route('sekretariat.amendments.decide', id), { status, notes: '' }, {
+            onStart: () => setProcessing(true),
+            onFinish: () => setProcessing(false),
+            onSuccess: () => setSelectedId(null),
         });
     };
 
     const handleClassify = (id, type) => {
-        post(route('sekretariat.amendments.classify', id), {
-            data: { type },
+        router.post(route('sekretariat.amendments.classify', id), { type }, {
             preserveScroll: true,
+            onStart: () => setProcessing(true),
+            onFinish: () => setProcessing(false),
         });
     };
 
@@ -42,10 +44,11 @@ export default function ReviewAmendment({ amendments, reviewers = [] }) {
             alert('Pilih reviewer terlebih dahulu.');
             return;
         }
-        post(route('sekretariat.amendments.assignReviewer', id), {
-            data: { reviewer_id: selectedReviewer },
-            onSuccess: () => setSelectedReviewer(''),
+        router.post(route('sekretariat.amendments.assignReviewer', id), { reviewer_id: selectedReviewer }, {
             preserveScroll: true,
+            onStart: () => setProcessing(true),
+            onFinish: () => setProcessing(false),
+            onSuccess: () => setSelectedReviewer(''),
         });
     };
 

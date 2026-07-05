@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm, Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import { ShieldAlert, CheckCircle, XCircle, Clock } from 'lucide-react';
 
@@ -11,13 +11,16 @@ const statusConfig = {
 
 export default function EskalasiTermination({ terminations }) {
     const [selectedId, setSelectedId] = useState(null);
-    const { post, processing, reset } = useForm({});
+    const [processing, setProcessing] = useState(false);
 
     const handleReview = (id, status) => {
-        if (!confirm(`Yakin ${status === 'Approved' ? 'menyetujui' : 'menolak'} eskalasi terminasi safety ini?`)) return;
-        post(route('ketua.terminations.reviewEskalasi', id), {
-            data: { status, notes: '' },
-            onSuccess: () => { reset(); setSelectedId(null); },
+        const actionText = status === 'Approved' ? 'menyetujui terminasi ini' : 'meminta investigasi lanjut (menolak terminasi sementara)';
+        if (!confirm(`Yakin ${actionText}?`)) return;
+        
+        router.post(route('ketua.terminations.reviewEskalasi', id), { status, notes: '' }, {
+            onStart: () => setProcessing(true),
+            onFinish: () => setProcessing(false),
+            onSuccess: () => setSelectedId(null),
         });
     };
 
@@ -107,11 +110,11 @@ export default function EskalasiTermination({ terminations }) {
                                                 <div className="ml-auto flex gap-2">
                                                     <button onClick={() => handleReview(term.id, 'Rejected')} disabled={processing}
                                                         className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-semibold transition disabled:opacity-50 flex items-center gap-1.5">
-                                                        <XCircle className="w-3.5 h-3.5" /> Tolak
+                                                        <XCircle className="w-3.5 h-3.5" /> Minta Investigasi Lanjut
                                                     </button>
                                                     <button onClick={() => handleReview(term.id, 'Approved')} disabled={processing}
                                                         className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl text-xs font-semibold transition disabled:opacity-50 flex items-center gap-1.5">
-                                                        <CheckCircle className="w-3.5 h-3.5" /> Setujui
+                                                        <CheckCircle className="w-3.5 h-3.5" /> Setujui Termination
                                                     </button>
                                                 </div>
                                             </div>

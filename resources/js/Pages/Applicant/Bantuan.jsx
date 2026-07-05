@@ -79,46 +79,6 @@ export default function Bantuan() {
 
                     {/* Sidebar templates & contacts */}
                     <div className="space-y-8">
-                        {/* Templates Card */}
-                        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-6">
-                            <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                                <FileText className="w-5 h-5 text-blue-600" />
-                                <span>Template Dokumen</span>
-                            </h3>
-                            <div className="space-y-3 font-semibold text-xs text-gray-600">
-                                <div className="p-3 border border-gray-100 rounded-xl flex items-center justify-between">
-                                    <span>Formulir Informed Consent</span>
-                                    <button 
-                                        type="button"
-                                        onClick={() => handleDownloadTemplate('Informed_Consent_Template.docx')}
-                                        className="p-1 hover:bg-gray-100 text-blue-600 rounded"
-                                    >
-                                        <Download className="w-4 h-4" />
-                                    </button>
-                                </div>
-                                <div className="p-3 border border-gray-100 rounded-xl flex items-center justify-between">
-                                    <span>Format Proposal Layak Etik</span>
-                                    <button 
-                                        type="button"
-                                        onClick={() => handleDownloadTemplate('Format_Proposal_Etik.docx')}
-                                        className="p-1 hover:bg-gray-100 text-blue-600 rounded"
-                                    >
-                                        <Download className="w-4 h-4" />
-                                    </button>
-                                </div>
-                                <div className="p-3 border border-gray-100 rounded-xl flex items-center justify-between">
-                                    <span>Surat Keterangan Kemitraan</span>
-                                    <button 
-                                        type="button"
-                                        onClick={() => handleDownloadTemplate('Surat_Kemitraan_Format.docx')}
-                                        className="p-1 hover:bg-gray-100 text-blue-600 rounded"
-                                    >
-                                        <Download className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
                         {/* Contacts Card */}
                         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-6">
                             <h3 className="font-bold text-gray-900 flex items-center gap-2">

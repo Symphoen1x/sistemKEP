@@ -82,6 +82,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/amendment/{id}', [AmendmentController::class, 'create'])->name('amendment.create');
         Route::post('/amendment/{id}', [AmendmentController::class, 'store'])->name('amendment.store');
         Route::get('/amendments', [AmendmentController::class, 'myAmendments'])->name('amendments.mine');
+
+        // Epic 9 — Termination
+        Route::get('/termination/{id}', [TerminationController::class, 'create'])->name('termination.create');
+        Route::post('/termination/{id}', [TerminationController::class, 'store'])->name('termination.store');
+        Route::get('/terminations', [TerminationController::class, 'myTerminations'])->name('terminations.mine');
     });
 
     // Route Group untuk Role: Sekretariat
@@ -135,9 +140,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/keputusan/{id}/disapprove', [SekretariatController::class, 'disapproveProposal'])->name('disapproveProposal');
         
         // Laporan & Profil
-        Route::get('/laporan', [SekretariatController::class, 'laporan'])->name('laporan');
-        Route::get('/laporan/export-pdf', [SekretariatController::class, 'exportPdf'])->name('laporan.exportPdf');
-        Route::get('/laporan/export-csv', [SekretariatController::class, 'exportCsv'])->name('laporan.exportCsv');
+        Route::get('/laporan', [\App\Http\Controllers\ReportController::class, 'index'])->name('laporan');
+        Route::get('/laporan/export-pdf', [\App\Http\Controllers\ReportController::class, 'exportPdf'])->name('laporan.exportPdf');
+        Route::get('/laporan/export-csv', [\App\Http\Controllers\ReportController::class, 'exportCsv'])->name('laporan.exportCsv');
         Route::get('/profil', [SekretariatController::class, 'profil'])->name('profil');
         Route::post('/profil', [SekretariatController::class, 'updateProfil'])->name('profil.update');
 
@@ -179,6 +184,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/templates', [\App\Http\Controllers\Admin\TemplateController::class, 'store'])->name('templates.store');
         Route::post('/templates/{template}', [\App\Http\Controllers\Admin\TemplateController::class, 'update'])->name('templates.update');
         Route::patch('/templates/{template}/toggle', [\App\Http\Controllers\Admin\TemplateController::class, 'toggleActive'])->name('templates.toggle');
+
+        // Epic 13 — Laporan & Statistik
+        Route::get('/laporan', [\App\Http\Controllers\ReportController::class, 'index'])->name('laporan');
+        Route::get('/laporan/export-pdf', [\App\Http\Controllers\ReportController::class, 'exportPdf'])->name('laporan.exportPdf');
+        Route::get('/laporan/export-csv', [\App\Http\Controllers\ReportController::class, 'exportCsv'])->name('laporan.exportCsv');
 
         // Epic 14 — Audit Log
         Route::get('/audit-log', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-log.index');
@@ -230,6 +240,11 @@ Route::middleware('auth')->group(function () {
 
         // Epic 8 — Amendment (Ketua view)
         Route::get('/amendments', [AmendmentController::class, 'myAmendments'])->name('amendments.mine');
+
+        // Epic 13 — Laporan & Statistik
+        Route::get('/laporan', [\App\Http\Controllers\ReportController::class, 'index'])->name('laporan');
+        Route::get('/laporan/export-pdf', [\App\Http\Controllers\ReportController::class, 'exportPdf'])->name('laporan.exportPdf');
+        Route::get('/laporan/export-csv', [\App\Http\Controllers\ReportController::class, 'exportCsv'])->name('laporan.exportCsv');
     });
 
     // Epic 9 — Termination (Applicant)

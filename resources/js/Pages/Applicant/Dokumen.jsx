@@ -2,7 +2,7 @@ import { Head } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import { FileText, Download, ShieldCheck, HelpCircle } from 'lucide-react';
 
-export default function Dokumen({ proposals = [] }) {
+export default function Dokumen({ proposals = [], templates = [] }) {
     // Only proposals that have approved certificates
     const certificates = proposals.filter(p => p.status === 'Disetujui' && p.sertifikat_path);
 
@@ -67,20 +67,28 @@ export default function Dokumen({ proposals = [] }) {
                                 <span>Formulir Pengusulan</span>
                             </h3>
                             <div className="space-y-3 text-xs font-semibold text-gray-600">
-                                <button 
-                                    onClick={() => handleDownload('/templates/kuesioner_self_assessment.docx', 'Kuesioner_Self_Assessment.docx')}
-                                    className="w-full p-3 border border-gray-100 rounded-xl flex items-center justify-between hover:bg-gray-50 text-left"
-                                >
-                                    <span>Formulir Self-Assessment Etik</span>
-                                    <Download className="w-4 h-4 text-blue-600" />
-                                </button>
-                                <button 
-                                    onClick={() => handleDownload('/templates/informed_consent_anak.docx', 'Informed_Consent_Anak.docx')}
-                                    className="w-full p-3 border border-gray-100 rounded-xl flex items-center justify-between hover:bg-gray-50 text-left"
-                                >
-                                    <span>Informed Consent (Anak/Wali)</span>
-                                    <Download className="w-4 h-4 text-blue-600" />
-                                </button>
+                                {templates.length > 0 ? (
+                                    templates.map((tpl) => (
+                                        <a 
+                                            key={tpl.id}
+                                            href={tpl.file_path}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="w-full p-3 border border-gray-100 rounded-xl flex items-center justify-between hover:bg-gray-50 text-left transition-colors"
+                                            title={tpl.description}
+                                        >
+                                            <div className="flex flex-col">
+                                                <span className="text-gray-900 font-bold">{tpl.name}</span>
+                                                <span className="text-[10px] text-gray-500 font-medium mt-0.5">Versi: {tpl.version}</span>
+                                            </div>
+                                            <Download className="w-4 h-4 text-blue-600 shrink-0" />
+                                        </a>
+                                    ))
+                                ) : (
+                                    <div className="p-4 text-center text-gray-400 bg-gray-50 rounded-xl">
+                                        Belum ada template aktif yang tersedia.
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

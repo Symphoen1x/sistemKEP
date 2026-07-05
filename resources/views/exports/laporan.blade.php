@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <title>Laporan Komisi Etik Penelitian</title>
     <style>
-        body { font-family: 'DejaVu Sans', sans-serif; font-size: 11px; color: #333; margin: 20px; }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 11px; color: #333; padding: 20px; }
         h1 { text-align: center; font-size: 18px; margin-bottom: 4px; }
         .subtitle { text-align: center; font-size: 12px; color: #666; margin-bottom: 20px; }
         .stats { margin-bottom: 20px; }
@@ -21,7 +23,7 @@
         .badge-revisi { background: #fef3c7; color: #92400e; }
         .badge-direview { background: #dbeafe; color: #1e40af; }
         .badge-pending { background: #f3f4f6; color: #374151; }
-        .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #999; }
+        .footer { margin-top: 20px; margin-bottom: 0; padding-bottom: 0; text-align: center; font-size: 10px; color: #999; }
     </style>
 </head>
 <body>

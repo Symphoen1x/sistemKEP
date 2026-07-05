@@ -146,7 +146,7 @@ class ApplicantController extends Controller
             $protokol->update($updatePaths);
         }
 
-        return redirect()->route('applicant.riwayat')->with('status', 'Proposal Penelitian Berhasil Diajukan!');
+        return redirect()->route('applicant.trackStatus')->with('status', 'Proposal Penelitian Berhasil Diajukan!');
     }
 
     public function riwayat()

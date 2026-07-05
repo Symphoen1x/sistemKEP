@@ -82,7 +82,7 @@ class AmendmentController extends Controller
             ]);
         }
 
-        return redirect()->route('applicant.riwayat')
+        return redirect()->route('applicant.trackStatus')
             ->with('status', 'Pengajuan Amendment berhasil dikirim.');
     }
 

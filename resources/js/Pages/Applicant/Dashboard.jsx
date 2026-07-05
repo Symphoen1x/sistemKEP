@@ -138,7 +138,7 @@ export default function Dashboard({ stats, recentProposals = [], revisions = [],
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                                 <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                                     <h4 className="font-bold text-gray-900">Status Pengajuan Terbaru</h4>
-                                    <Link href={route('applicant.riwayat')} className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                                    <Link href={route('applicant.trackStatus')} className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
                                         <span>Lihat Semua</span>
                                         <ArrowRight className="w-4 h-4" />
                                     </Link>
@@ -200,7 +200,7 @@ export default function Dashboard({ stats, recentProposals = [], revisions = [],
                                                     </p>
                                                 </div>
                                                 <Link
-                                                    href={route('applicant.riwayat')}
+                                                    href={route('applicant.trackStatus')}
                                                     className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1.5"
                                                 >
                                                     <MessageSquare className="w-3.5 h-3.5" />
