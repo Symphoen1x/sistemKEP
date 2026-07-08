@@ -8,8 +8,10 @@ use App\Models\Amendment;
 use App\Models\JadwalRapat;
 use App\Models\User;
 use App\Models\AuditLog;
+use App\Models\DocumentVersion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Carbon\Carbon;
 
@@ -95,6 +97,74 @@ class ReviewerController extends Controller
     {
         $protocol = Protokol::findOrFail($id);
         return response()->json($protocol);
+    }
+
+    /**
+     * Download a document from a proposal (Berkas Usulan).
+     */
+    public function downloadDocument($id, $type)
+    {
+        $protokol = Protokol::findOrFail($id);
+
+        // Verify the reviewer is assigned to this protocol
+        Review::where('protokol_id', $id)
+            ->where('reviewer_id', Auth::id())
+            ->firstOrFail();
+
+        $fieldMap = [
+            'proposal'  => 'proposal_path',
+            'consent'   => 'informed_consent_path',
+            'izin'      => 'surat_izin_path',
+            'formulir'  => 'formulir_pengajuan_path',
+            'ringkasan' => 'ringkasan_protokol_path',
+            'instrumen' => 'instrumen_path',
+            'sertifikat'=> 'sertifikat_path',
+        ];
+
+        if (!isset($fieldMap[$type])) {
+            abort(404, 'Tipe dokumen tidak valid.');
+        }
+
+        $filePath = $protokol->{$fieldMap[$type]};
+
+        if (!$filePath) {
+            abort(404, 'Dokumen tidak ditemukan.');
+        }
+
+        $relativePath = str_replace('/storage/', '', $filePath);
+
+        if (!Storage::disk('public')->exists($relativePath)) {
+            abort(404, 'File tidak ditemukan di penyimpanan.');
+        }
+
+        $extension = pathinfo($relativePath, PATHINFO_EXTENSION);
+        $filename = $type . '_' . ($protokol->nomor_pengajuan ?? 'protokol') . '.' . $extension;
+
+        return Storage::disk('public')->download($relativePath, $filename);
+    }
+
+    /**
+     * Download a specific document version.
+     */
+    public function downloadVersion($versionId)
+    {
+        $version = DocumentVersion::findOrFail($versionId);
+
+        // Verify the reviewer is assigned to this protocol
+        Review::where('protokol_id', $version->protokol_id)
+            ->where('reviewer_id', Auth::id())
+            ->firstOrFail();
+
+        $filePath = $version->file_path;
+        $relativePath = str_replace('/storage/', '', $filePath);
+
+        if (!Storage::disk('public')->exists($relativePath)) {
+            abort(404, 'File tidak ditemukan di penyimpanan.');
+        }
+
+        $filename = $version->original_filename ?? 'document';
+
+        return Storage::disk('public')->download($relativePath, $filename);
     }
 
     public function showReviewForm($id)

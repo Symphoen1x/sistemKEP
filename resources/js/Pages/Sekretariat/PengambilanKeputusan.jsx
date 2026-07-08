@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm, usePage, router } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import { Head } from '@inertiajs/react';
 import { CheckCircle2, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
@@ -11,17 +11,27 @@ export default function PengambilanKeputusan({ proposals }) {
         status: 'Approved',
         notes: '',
         feedback_applicant: '',
+        rejection_reason: '',
     });
 
     const selected = proposals.find(p => p.id === selectedId);
-    const isFullBoard = selected?.review_type === 'Full Board';
 
     const handleDecision = (e, proposalId) => {
         e.preventDefault();
 
-        // PB35: If Disapproved, redirect to dedicated form
         if (data.status === 'Disapproved') {
-            router.visit(route('sekretariat.showDisapproveForm', proposalId));
+            if (!data.rejection_reason.trim() || !data.feedback_applicant.trim() || !data.notes.trim()) {
+                alert('Semua kolom wajib diisi untuk keputusan Disapproved.');
+                return;
+            }
+            if (confirm('Simpan keputusan DITOLAK (Disapproved)? Tindakan ini tidak dapat dibatalkan.')) {
+                post(route('sekretariat.disapproveProposal', proposalId), {
+                    onSuccess: () => {
+                        setSelectedId(null);
+                        setData({ status: 'Approved', notes: '', feedback_applicant: '', rejection_reason: '' });
+                    }
+                });
+            }
             return;
         }
 
@@ -33,7 +43,7 @@ export default function PengambilanKeputusan({ proposals }) {
             post(route('sekretariat.makeDecision', proposalId), {
                 onSuccess: () => {
                     setSelectedId(null);
-                    setData({ status: 'Approved', notes: '', feedback_applicant: '' });
+                    setData({ status: 'Approved', notes: '', feedback_applicant: '', rejection_reason: '' });
                 }
             });
         }
@@ -76,18 +86,17 @@ export default function PengambilanKeputusan({ proposals }) {
         {
             value: 'Disapproved',
             label: 'Ditolak (Disapproved)',
-            desc: 'Proposal tidak layak etik — buka form penolakan terpisah',
+            desc: 'Proposal tidak layak etik — isi alasan penolakan di bawah',
             icon: XCircle,
             border: 'border-red-300',
             bg: '',
             active: 'border-red-500 bg-red-50',
             iconColor: 'text-red-600',
             show: true,
-            disabled: !isFullBoard,
         },
     ];
 
-    const needsFeedback = ['AWR', 'Resubmission'].includes(data.status);
+    const needsFeedback = ['AWR', 'Resubmission', 'Disapproved'].includes(data.status);
 
     return (
         <div className="flex min-h-screen bg-gray-50 text-gray-800">
@@ -130,7 +139,7 @@ export default function PengambilanKeputusan({ proposals }) {
                                                 key={proposal.id}
                                                 onClick={() => {
                                                     setSelectedId(proposal.id);
-                                                    setData({ status: 'Approved', notes: '', feedback_applicant: '' });
+                                                    setData({ status: 'Approved', notes: '', feedback_applicant: '', rejection_reason: '' });
                                                 }}
                                                 className={`w-full text-left p-3 rounded-xl border transition ${
                                                     selectedId === proposal.id
@@ -237,12 +246,6 @@ export default function PengambilanKeputusan({ proposals }) {
                                     <form onSubmit={(e) => handleDecision(e, selected.id)} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
                                         <h4 className="font-semibold text-lg text-gray-900">Buat Keputusan Akhir</h4>
 
-                                        {!isFullBoard && (
-                                            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700 font-medium">
-                                                Tipe review ini adalah <strong>{selected.review_type || 'Non-Full Board'}</strong>. Pilihan <strong>Disapproved</strong> tidak tersedia.
-                                            </div>
-                                        )}
-
                                         <div className="space-y-3">
                                             {decisionOptions.map((opt) => {
                                                 const Icon = opt.icon;
@@ -280,22 +283,42 @@ export default function PengambilanKeputusan({ proposals }) {
                                             })}
                                         </div>
 
-                                        {/* Feedback ke Applicant (untuk AWR & Resubmission) */}
+                                        {/* Alasan Penolakan (untuk Disapproved) */}
+                                        {data.status === 'Disapproved' && (
+                                            <div>
+                                                <label className="block text-sm font-bold text-gray-900 mb-1.5">
+                                                    Alasan Penolakan (Internal Komisi) <span className="text-red-500">*</span>
+                                                </label>
+                                                <textarea
+                                                    value={data.rejection_reason}
+                                                    onChange={(e) => setData('rejection_reason', e.target.value)}
+                                                    rows="4"
+                                                    className="w-full border border-red-300 rounded-xl p-4 text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                                                    placeholder="Contoh: Protokol penelitian tidak memenuhi standar etika karena..."
+                                                    required
+                                                />
+                                                {errors.rejection_reason && <p className="text-red-500 text-xs mt-1">{errors.rejection_reason}</p>}
+                                            </div>
+                                        )}
+
+                                        {/* Feedback ke Applicant */}
                                         {needsFeedback && (
                                             <div>
                                                 <label className="block text-sm font-semibold text-gray-900 mb-1">
-                                                    Feedback / Instruksi untuk Applicant <span className="text-orange-500">*</span>
+                                                    {data.status === 'Disapproved'
+                                                        ? 'Feedback untuk Applicant'
+                                                        : 'Feedback / Instruksi untuk Applicant'} <span className="text-orange-500">*</span>
                                                 </label>
-                                                <p className="text-xs text-gray-500 mb-2">
-                                                    Tulis poin-poin perbaikan yang perlu dilakukan Applicant secara jelas.
-                                                </p>
                                                 <textarea
                                                     value={data.feedback_applicant}
                                                     onChange={(e) => setData('feedback_applicant', e.target.value)}
                                                     rows="4"
                                                     className="w-full border border-orange-300 rounded-xl p-4 text-sm focus:ring-2 focus:ring-orange-400 focus:border-transparent"
-                                                    placeholder="Contoh: 1. Lengkapi informed consent sesuai template terbaru. 2. Perjelas metodologi di bagian 3.2..."
+                                                    placeholder={data.status === 'Disapproved'
+                                                        ? 'Contoh: Setelah melalui proses review, komisi etik memutuskan proposal belum layak disetujui karena...'
+                                                        : 'Contoh: 1. Lengkapi informed consent sesuai template terbaru. 2. Perjelas metodologi di bagian 3.2...'}
                                                 />
+                                                {errors.feedback_applicant && <p className="text-red-500 text-xs mt-1">{errors.feedback_applicant}</p>}
                                             </div>
                                         )}
 

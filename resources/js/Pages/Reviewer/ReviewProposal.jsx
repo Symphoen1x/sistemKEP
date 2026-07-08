@@ -40,15 +40,6 @@ export default function ReviewProposal({ proposal, review, documentVersions = {}
         }
     };
 
-    const handleDownload = (path, name) => {
-        const link = document.createElement('a');
-        link.href = path;
-        link.download = name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
     const formatDate = (dateStr) => {
         if (!dateStr) return '-';
         return new Date(dateStr).toLocaleDateString('id-ID', {
@@ -214,9 +205,8 @@ export default function ReviewProposal({ proposal, review, documentVersions = {}
                                                                             {formatDate(ver.created_at)} • {ver.file_size || '-'}
                                                                         </p>
                                                                     </div>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleDownload(ver.file_path, `${docType}_v${ver.version}`)}
+                                                                    <a
+                                                                        href={route('reviewer.downloadVersion', ver.id)}
                                                                         className={`p-2 rounded-lg transition ${
                                                                             isLatest
                                                                                 ? 'bg-blue-100 text-blue-600 hover:bg-blue-200'
@@ -224,7 +214,7 @@ export default function ReviewProposal({ proposal, review, documentVersions = {}
                                                                         }`}
                                                                     >
                                                                         <Download className="w-4 h-4" />
-                                                                    </button>
+                                                                    </a>
                                                                 </div>
                                                             );
                                                         })}
@@ -256,9 +246,8 @@ export default function ReviewProposal({ proposal, review, documentVersions = {}
                         </h4>
                         <div className="space-y-2 text-xs font-bold text-gray-700">
                             {proposal.proposal_path && (
-                                <button 
-                                    type="button" 
-                                    onClick={() => handleDownload(proposal.proposal_path, 'Proposal')}
+                                <a 
+                                    href={route('reviewer.download', [proposal.id, 'proposal'])}
                                     className="w-full flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
                                 >
                                     <span className="flex items-center gap-2">
@@ -266,12 +255,11 @@ export default function ReviewProposal({ proposal, review, documentVersions = {}
                                         <span>Proposal Penelitian</span>
                                     </span>
                                     <Download className="w-4 h-4 text-gray-400" />
-                                </button>
+                                </a>
                             )}
                             {proposal.informed_consent_path && (
-                                <button 
-                                    type="button" 
-                                    onClick={() => handleDownload(proposal.informed_consent_path, 'InformedConsent')}
+                                <a 
+                                    href={route('reviewer.download', [proposal.id, 'consent'])}
                                     className="w-full flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
                                 >
                                     <span className="flex items-center gap-2">
@@ -279,12 +267,11 @@ export default function ReviewProposal({ proposal, review, documentVersions = {}
                                         <span>Informed Consent</span>
                                     </span>
                                     <Download className="w-4 h-4 text-gray-400" />
-                                </button>
+                                </a>
                             )}
                             {proposal.surat_izin_path && (
-                                <button 
-                                    type="button" 
-                                    onClick={() => handleDownload(proposal.surat_izin_path, 'SuratIzin')}
+                                <a 
+                                    href={route('reviewer.download', [proposal.id, 'izin'])}
                                     className="w-full flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
                                 >
                                     <span className="flex items-center gap-2">
@@ -292,12 +279,11 @@ export default function ReviewProposal({ proposal, review, documentVersions = {}
                                         <span>Surat Izin Penelitian</span>
                                     </span>
                                     <Download className="w-4 h-4 text-gray-400" />
-                                </button>
+                                </a>
                             )}
                             {proposal.formulir_pengajuan_path && (
-                                <button
-                                    type="button"
-                                    onClick={() => handleDownload(proposal.formulir_pengajuan_path, 'FormulirPengajuan')}
+                                <a
+                                    href={route('reviewer.download', [proposal.id, 'formulir'])}
                                     className="w-full flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
                                 >
                                     <span className="flex items-center gap-2">
@@ -305,12 +291,11 @@ export default function ReviewProposal({ proposal, review, documentVersions = {}
                                         <span>Formulir Pengajuan (TTD)</span>
                                     </span>
                                     <Download className="w-4 h-4 text-gray-400" />
-                                </button>
+                                </a>
                             )}
                             {proposal.ringkasan_protokol_path && (
-                                <button
-                                    type="button"
-                                    onClick={() => handleDownload(proposal.ringkasan_protokol_path, 'RingkasanProtokol')}
+                                <a
+                                    href={route('reviewer.download', [proposal.id, 'ringkasan'])}
                                     className="w-full flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
                                 >
                                     <span className="flex items-center gap-2">
@@ -318,12 +303,11 @@ export default function ReviewProposal({ proposal, review, documentVersions = {}
                                         <span>Ringkasan Protokol (TTD)</span>
                                     </span>
                                     <Download className="w-4 h-4 text-gray-400" />
-                                </button>
+                                </a>
                             )}
                             {proposal.instrumen_path && (
-                                <button
-                                    type="button"
-                                    onClick={() => handleDownload(proposal.instrumen_path, 'Instrumen')}
+                                <a
+                                    href={route('reviewer.download', [proposal.id, 'instrumen'])}
                                     className="w-full flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
                                 >
                                     <span className="flex items-center gap-2">
@@ -331,7 +315,7 @@ export default function ReviewProposal({ proposal, review, documentVersions = {}
                                         <span>Instrumen / Kuesioner</span>
                                     </span>
                                     <Download className="w-4 h-4 text-gray-400" />
-                                </button>
+                                </a>
                             )}
                         </div>
                     </div>

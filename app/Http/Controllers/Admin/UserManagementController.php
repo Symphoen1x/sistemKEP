@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Permission\Models\Role;
@@ -81,12 +81,10 @@ class UserManagementController extends Controller
      */
     public function store(StoreUserRequest $request): RedirectResponse
     {
-        $temporaryPassword = Str::random(12);
-
         $user = User::create([
             'name'             => $request->name,
             'email'            => $request->email,
-            'password'         => Hash::make($temporaryPassword),
+            'password'         => Hash::make($request->password),
             'status'           => 'active', // Akun internal langsung aktif
             'active_role_name' => $request->role,
             'phone_number'     => $request->phone_number,
@@ -97,7 +95,7 @@ class UserManagementController extends Controller
 
         // Kirim email kredensial (via log driver sementara; SMTP dikonfigurasi di Epic 11)
         try {
-            Mail::to($user->email)->send(new NewAccountCredentials($user, $temporaryPassword, $request->role));
+            Mail::to($user->email)->send(new NewAccountCredentials($user, $request->password, $request->role));
         } catch (\Exception $e) {
             Log::warning("Gagal mengirim email kredensial ke {$user->email}: " . $e->getMessage());
         }
@@ -193,5 +191,23 @@ class UserManagementController extends Controller
         Log::info("User status toggled: user [{$user->id}] {$user->name} => {$newStatus}, by admin=" . auth()->id());
 
         return back()->with('success', "Akun {$user->name} berhasil {$statusLabel}.");
+    }
+
+    /**
+     * Change a user's password (admin-set).
+     */
+    public function updatePassword(Request $request, User $user): RedirectResponse
+    {
+        $request->validate([
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        Log::info("Password changed for user [{$user->id}] {$user->name} by admin=" . auth()->id());
+
+        return back()->with('success', "Kata sandi untuk {$user->name} berhasil diubah.");
     }
 }

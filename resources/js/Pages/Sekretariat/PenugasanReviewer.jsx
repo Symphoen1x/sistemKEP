@@ -45,7 +45,8 @@ export default function PenugasanReviewer({ reviewers = [], proposals = [] }) {
     };
 
     // Filter proposals that need reviewer assignment
-    const reviewProposals = proposals.filter(p => p.status === 'Direview' || p.status === 'Pending');
+    // Only show proposals that passed administrative verification (status = 'Direview')
+    const reviewProposals = proposals.filter(p => p.status === 'Direview');
 
     return (
         <div className="flex min-h-screen bg-gray-50 text-gray-800">
@@ -66,7 +67,7 @@ export default function PenugasanReviewer({ reviewers = [], proposals = [] }) {
                     <div className="lg:col-span-2 space-y-6">
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                             <div className="p-6 border-b border-gray-100 font-bold text-gray-900">
-                                Usulan Butuh Penelaah
+                                Usulan Lolos Verifikasi — Butuh Penelaah
                             </div>
                             <div className="divide-y divide-gray-100 font-semibold text-xs">
                                 {reviewProposals.length > 0 ? (
@@ -153,6 +154,123 @@ export default function PenugasanReviewer({ reviewers = [], proposals = [] }) {
                                 )}
                             </div>
                         </div>
+
+                        {/* Permintaan Revisi dari Reviewer */}
+                        {proposals.filter(p => p.status === 'Revisi' || (p.reviews && p.reviews.some(r => r.recommendation === 'Conditionally Approved' || r.recommendation === 'Revisi'))).length > 0 && (
+                            <div className="bg-white rounded-2xl border border-orange-200 shadow-sm overflow-hidden">
+                                <div className="p-6 border-b border-orange-100 font-bold text-gray-900 flex items-center gap-2">
+                                    <AlertTriangle className="w-5 h-5 text-orange-500" />
+                                    <span>Permintaan Revisi dari Reviewer</span>
+                                </div>
+                                <div className="divide-y divide-orange-50 font-semibold text-xs">
+                                    {proposals.filter(p => p.status === 'Revisi' || (p.reviews && p.reviews.some(r => r.recommendation === 'Conditionally Approved' || r.recommendation === 'Revisi'))).map((item) => (
+                                        <div key={item.id} className="p-6 space-y-3">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                                                    {item.nomor_pengajuan}
+                                                </span>
+                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold border bg-orange-50 text-orange-700 border-orange-200">
+                                                    Perlu Revisi
+                                                </span>
+                                            </div>
+                                            <h4 className="font-bold text-gray-900 leading-snug">{item.judul}</h4>
+                                            <p className="text-xs text-gray-500 font-medium">Pengusul: {item.peneliti}</p>
+
+                                            {/* Show reviewer feedback from Review records */}
+                                            {item.reviews && item.reviews.filter(r => r.recommendation === 'Conditionally Approved' || r.recommendation === 'Revisi').length > 0 ? (
+                                                item.reviews.filter(r => r.recommendation === 'Conditionally Approved' || r.recommendation === 'Revisi').map((review, rIdx) => (
+                                                    <div key={rIdx} className="p-4 bg-orange-50 border border-orange-100 rounded-xl space-y-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <ShieldCheck className="w-4 h-4 text-orange-600" />
+                                                            <span className="text-xs font-bold text-gray-900">{review.reviewer_name || 'Reviewer'}</span>
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-orange-200 text-orange-800">
+                                                                {review.recommendation}
+                                                            </span>
+                                                        </div>
+                                                        {review.feedback && (
+                                                            <div className="ml-6">
+                                                                <p className="text-[10px] font-bold text-orange-700 uppercase mb-1">Catatan Revisi:</p>
+                                                                <p className="text-sm text-gray-700 whitespace-pre-line bg-white p-3 rounded-lg border border-orange-100">
+                                                                    {review.feedback}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                /* Fallback: show catatan_revisi from Protokol (storeReview path) */
+                                                item.catatan_revisi && (
+                                                    <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl space-y-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <ShieldCheck className="w-4 h-4 text-orange-600" />
+                                                            <span className="text-xs font-bold text-gray-900">
+                                                                {item.reviewer ? item.reviewer.name : 'Reviewer'}
+                                                            </span>
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-orange-200 text-orange-800">
+                                                                Revisi
+                                                            </span>
+                                                        </div>
+                                                        <div className="ml-6">
+                                                            <p className="text-[10px] font-bold text-orange-700 uppercase mb-1">Catatan Revisi:</p>
+                                                            <p className="text-sm text-gray-700 whitespace-pre-line bg-white p-3 rounded-lg border border-orange-100">
+                                                                {item.catatan_revisi}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Hasil Review Selesai */}
+                        {proposals.filter(p => p.reviews && p.reviews.some(r => r.status === 'Completed')).length > 0 && (
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                <div className="p-6 border-b border-gray-100 font-bold text-gray-900">
+                                    Hasil Review Selesai
+                                </div>
+                                <div className="divide-y divide-gray-100 font-semibold text-xs">
+                                    {proposals.filter(p => p.reviews && p.reviews.some(r => r.status === 'Completed')).map((item) => (
+                                        <div key={item.id} className="p-6 space-y-3">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                                                    {item.nomor_pengajuan}
+                                                </span>
+                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                                                    item.status === 'Disetujui' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                    item.status === 'Ditolak' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                    item.status === 'Revisi' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                                                    'bg-gray-50 text-gray-600 border-gray-200'
+                                                }`}>
+                                                    {item.status}
+                                                </span>
+                                            </div>
+                                            <h4 className="font-bold text-gray-900 leading-snug">{item.judul}</h4>
+                                            <p className="text-xs text-gray-500 font-medium">Pengusul: {item.peneliti}</p>
+                                            
+                                            {item.reviews.filter(r => r.status === 'Completed').map((review, rIdx) => (
+                                                <div key={rIdx} className="p-3 bg-gray-50 rounded-xl space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                                                        <span className="text-xs font-bold text-gray-900">{review.reviewer_name || 'Reviewer'}</span>
+                                                        {review.recommendation && (
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-700">
+                                                                {review.recommendation}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {review.feedback && (
+                                                        <p className="text-sm text-gray-700 whitespace-pre-line ml-5">{review.feedback}</p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Reviewers Directory info */}

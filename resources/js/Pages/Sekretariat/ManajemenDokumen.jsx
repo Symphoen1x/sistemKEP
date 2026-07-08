@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import { useState } from 'react';
-import { Search, FileText, Download } from 'lucide-react';
+import { Search, FileText } from 'lucide-react';
 
 export default function ManajemenDokumen({ proposals = [] }) {
     const [search, setSearch] = useState('');
@@ -11,10 +11,6 @@ export default function ManajemenDokumen({ proposals = [] }) {
         p.peneliti.toLowerCase().includes(search.toLowerCase()) ||
         (p.nomor_pengajuan && p.nomor_pengajuan.toLowerCase().includes(search.toLowerCase()))
     );
-
-    const handleDownload = (path, name) => {
-        alert(`Mengunduh berkas "${name}" ... (Simulasi Unduhan File: ${path})`);
-    };
 
     return (
         <div className="flex min-h-screen bg-gray-50 text-gray-800">
@@ -75,65 +71,60 @@ export default function ManajemenDokumen({ proposals = [] }) {
                                                 {/* Proposal */}
                                                 <td className="px-6 py-4 text-center">
                                                     {item.proposal_path ? (
-                                                        <button 
-                                                            type="button"
-                                                            onClick={() => handleDownload(item.proposal_path, 'Proposal_' + item.nomor_pengajuan)}
-                                                            className="p-1 text-red-600 hover:bg-red-50 rounded"
+                                                        <a 
+                                                            href={route('sekretariat.dokumen.download', [item.id, 'proposal'])}
+                                                            className="p-1 text-red-600 hover:bg-red-50 rounded inline-block"
                                                         >
                                                             <FileText className="w-5 h-5 mx-auto" />
-                                                        </button>
+                                                        </a>
                                                     ) : '-'}
                                                 </td>
 
                                                 {/* Consent */}
                                                 <td className="px-6 py-4 text-center">
                                                     {item.informed_consent_path ? (
-                                                        <button 
-                                                            type="button"
-                                                            onClick={() => handleDownload(item.informed_consent_path, 'Consent_' + item.nomor_pengajuan)}
-                                                            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                                                        <a 
+                                                            href={route('sekretariat.dokumen.download', [item.id, 'consent'])}
+                                                            className="p-1 text-blue-600 hover:bg-blue-50 rounded inline-block"
                                                         >
                                                             <FileText className="w-5 h-5 mx-auto" />
-                                                        </button>
+                                                        </a>
                                                     ) : '-'}
                                                 </td>
 
                                                 {/* Izin */}
                                                 <td className="px-6 py-4 text-center">
                                                     {item.surat_izin_path ? (
-                                                        <button 
-                                                            type="button"
-                                                            onClick={() => handleDownload(item.surat_izin_path, 'Izin_' + item.nomor_pengajuan)}
-                                                            className="p-1 text-indigo-600 hover:bg-indigo-50 rounded"
+                                                        <a 
+                                                            href={route('sekretariat.dokumen.download', [item.id, 'izin'])}
+                                                            className="p-1 text-indigo-600 hover:bg-indigo-50 rounded inline-block"
                                                         >
                                                             <FileText className="w-5 h-5 mx-auto" />
-                                                        </button>
+                                                        </a>
                                                     ) : '-'}
                                                 </td>
 
                                                 {/* Instrumen */}
                                                 <td className="px-6 py-4 text-center">
                                                     {item.instrumen_path ? (
-                                                        <button 
-                                                            type="button"
-                                                            onClick={() => handleDownload(item.instrumen_path, 'Instrumen_' + item.nomor_pengajuan)}
-                                                            className="p-1 text-orange-600 hover:bg-orange-50 rounded"
+                                                        <a 
+                                                            href={route('sekretariat.dokumen.download', [item.id, 'instrumen'])}
+                                                            className="p-1 text-orange-600 hover:bg-orange-50 rounded inline-block"
                                                         >
                                                             <FileText className="w-5 h-5 mx-auto" />
-                                                        </button>
+                                                        </a>
                                                     ) : '-'}
                                                 </td>
 
                                                 {/* Sertifikat */}
                                                 <td className="px-6 py-4 text-center">
                                                     {item.sertifikat_path ? (
-                                                        <button 
-                                                            type="button"
-                                                            onClick={() => handleDownload(item.sertifikat_path, 'Sertifikat_' + item.nomor_pengajuan)}
-                                                            className="p-1 text-green-600 hover:bg-green-50 rounded"
+                                                        <a 
+                                                            href={route('sekretariat.dokumen.download', [item.id, 'sertifikat'])}
+                                                            className="p-1 text-green-600 hover:bg-green-50 rounded inline-block"
                                                         >
                                                             <FileText className="w-5 h-5 mx-auto" />
-                                                        </button>
+                                                        </a>
                                                     ) : '-'}
                                                 </td>
                                             </tr>

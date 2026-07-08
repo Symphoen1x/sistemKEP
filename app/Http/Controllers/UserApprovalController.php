@@ -21,7 +21,7 @@ class UserApprovalController extends Controller
             ->orderBy('created_at', 'asc')
             ->get();
 
-        return Inertia::render('Sekretariat/PendingUsers', [
+        return Inertia::render('Admin/PendingUsers', [
             'pendingUsers' => $pendingUsers,
         ]);
     }
@@ -47,7 +47,7 @@ class UserApprovalController extends Controller
         // Send email notification here about activation.
         Message::create([
             'user_id' => $user->id,
-            'sender_name' => 'Sekretariat KEP',
+            'sender_name' => 'Admin KEP',
             'subject' => 'Pendaftaran Akun Disetujui',
             'body' => "Selamat! Pendaftaran akun Anda di Sistem KEP telah disetujui sebagai {$request->role}. Silakan masuk ke sistem menggunakan kredensial Anda.",
         ]);
@@ -71,9 +71,9 @@ class UserApprovalController extends Controller
         // Send email notification here about rejection.
         Message::create([
             'user_id' => $user->id,
-            'sender_name' => 'Sekretariat KEP',
+            'sender_name' => 'Admin KEP',
             'subject' => 'Pendaftaran Akun Ditolak',
-            'body' => "Mohon maaf, pendaftaran akun Anda di Sistem KEP ditolak oleh Sekretariat. Silakan hubungi kami untuk informasi lebih lanjut.",
+            'body' => "Mohon maaf, pendaftaran akun Anda di Sistem KEP ditolak oleh Admin. Silakan hubungi kami untuk informasi lebih lanjut.",
         ]);
 
         return back()->with('status', "Pendaftaran akun {$user->name} telah ditolak.");

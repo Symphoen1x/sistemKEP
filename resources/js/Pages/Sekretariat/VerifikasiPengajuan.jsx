@@ -201,7 +201,7 @@ export default function VerifikasiPengajuan({ proposals = [] }) {
                                                 <FileText className="w-4 h-4 text-red-500" />
                                                 <span>Proposal Penelitian.pdf</span>
                                             </span>
-                                            <a href={selectedProposal.proposal_path} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                                            <a href={route('sekretariat.dokumen.download', [selectedProposal.id, 'proposal'])} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
                                         </div>
                                     )}
                                     {selectedProposal.informed_consent_path && (
@@ -210,7 +210,7 @@ export default function VerifikasiPengajuan({ proposals = [] }) {
                                                 <FileText className="w-4 h-4 text-blue-500" />
                                                 <span>Informed Consent.pdf</span>
                                             </span>
-                                            <a href={selectedProposal.informed_consent_path} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                                            <a href={route('sekretariat.dokumen.download', [selectedProposal.id, 'consent'])} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
                                         </div>
                                     )}
                                     {selectedProposal.surat_izin_path && (
@@ -219,7 +219,7 @@ export default function VerifikasiPengajuan({ proposals = [] }) {
                                                 <FileText className="w-4 h-4 text-indigo-500" />
                                                 <span>Surat Izin Tempat.pdf</span>
                                             </span>
-                                            <a href={selectedProposal.surat_izin_path} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                                            <a href={route('sekretariat.dokumen.download', [selectedProposal.id, 'izin'])} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
                                         </div>
                                     )}
                                     {selectedProposal.formulir_pengajuan_path && (
@@ -228,7 +228,7 @@ export default function VerifikasiPengajuan({ proposals = [] }) {
                                                 <FileText className="w-4 h-4 text-emerald-500" />
                                                 <span>Formulir Pengajuan (TTD)</span>
                                             </span>
-                                            <a href={selectedProposal.formulir_pengajuan_path} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                                            <a href={route('sekretariat.dokumen.download', [selectedProposal.id, 'formulir'])} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
                                         </div>
                                     )}
                                     {selectedProposal.ringkasan_protokol_path && (
@@ -237,7 +237,7 @@ export default function VerifikasiPengajuan({ proposals = [] }) {
                                                 <FileText className="w-4 h-4 text-teal-500" />
                                                 <span>Ringkasan Protokol (TTD)</span>
                                             </span>
-                                            <a href={selectedProposal.ringkasan_protokol_path} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                                            <a href={route('sekretariat.dokumen.download', [selectedProposal.id, 'ringkasan'])} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
                                         </div>
                                     )}
                                     {selectedProposal.instrumen_path && (
@@ -246,7 +246,7 @@ export default function VerifikasiPengajuan({ proposals = [] }) {
                                                 <FileText className="w-4 h-4 text-orange-500" />
                                                 <span>Instrumen Kuesioner.pdf</span>
                                             </span>
-                                            <a href={selectedProposal.instrumen_path} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                                            <a href={route('sekretariat.dokumen.download', [selectedProposal.id, 'instrumen'])} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
                                         </div>
                                     )}
                                 </div>

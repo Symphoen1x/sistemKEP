@@ -85,8 +85,38 @@ export default function UploadRevisi({ proposal }) {
 
                         {proposal.catatan_revisi && (
                             <div className={`mt-3 pt-3 border-t ${isAWR ? 'border-cyan-200' : 'border-orange-200'}`}>
-                                <p className={`text-xs font-bold mb-1 ${isAWR ? 'text-cyan-800' : 'text-orange-800'}`}>Catatan Sekretariat:</p>
+                                <p className={`text-xs font-bold mb-1 ${isAWR ? 'text-cyan-800' : 'text-orange-800'}`}>Catatan dari Reviewer:</p>
                                 <p className={`text-sm ${isAWR ? 'text-cyan-700' : 'text-orange-700'}`}>{proposal.catatan_revisi}</p>
+                                <p className={`text-xs mt-2 ${isAWR ? 'text-cyan-600' : 'text-orange-600'} font-medium`}>
+                                    Silakan unggah ulang dokumen yang perlu diperbaiki pada formulir di bawah ini.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Feedback dari Reviewer */}
+                        {proposal.reviews && proposal.reviews.filter(r => r.status === 'Completed').length > 0 && (
+                            <div className={`mt-3 pt-3 border-t ${isAWR ? 'border-cyan-200' : 'border-orange-200'}`}>
+                                <p className={`text-xs font-bold mb-2 flex items-center gap-1 ${isAWR ? 'text-cyan-800' : 'text-orange-800'}`}>
+                                    <AlertCircle className="w-3.5 h-3.5" />
+                                    Feedback dari Reviewer:
+                                </p>
+                                <div className="space-y-2">
+                                    {proposal.reviews.filter(r => r.status === 'Completed').map((review, idx) => (
+                                        <div key={idx} className="pb-2 border-b border-gray-100 last:border-0 last:pb-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-xs font-bold text-gray-900">{review.reviewer?.name || 'Reviewer'}</span>
+                                                {review.recommendation && (
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-700">
+                                                        {review.recommendation}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {review.feedback && (
+                                                <p className="text-sm text-gray-700 whitespace-pre-line">{review.feedback}</p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -95,7 +125,7 @@ export default function UploadRevisi({ proposal }) {
                     <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
                         <h3 className="font-semibold text-gray-900">Unggah Dokumen yang Diperbaiki</h3>
                         <p className="text-sm text-gray-500">
-                            Unggah hanya dokumen yang perlu diperbaiki. Dokumen yang tidak diunggah ulang akan tetap menggunakan versi sebelumnya.
+                            Unggah hanya dokumen yang perlu diperbaiki berdasarkan catatan reviewer di atas. Dokumen yang tidak diunggah ulang akan tetap menggunakan versi sebelumnya.
                         </p>
 
                         <div className="space-y-4">

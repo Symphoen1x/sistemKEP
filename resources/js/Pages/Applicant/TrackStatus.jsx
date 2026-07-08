@@ -118,9 +118,40 @@ export default function TrackStatus({ proposals }) {
                                     {proposal.catatan_revisi && (
                                         <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-xl">
                                             <p className="text-xs font-bold text-orange-800 mb-1 flex items-center gap-1">
-                                                <AlertCircle className="w-3.5 h-3.5" /> Catatan Revisi dari Sekretariat
+                                                <AlertCircle className="w-3.5 h-3.5" /> Catatan Revisi dari Reviewer
                                             </p>
                                             <p className="text-sm text-orange-700">{proposal.catatan_revisi}</p>
+                                            {canRevisi && (
+                                                <p className="text-xs text-orange-600 mt-2 font-medium">
+                                                    Silakan unggah perbaikan dokumen menggunakan tombol "Unggah Perbaikan" di bawah ini.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Feedback dari Reviewer */}
+                                    {proposal.reviews && proposal.reviews.filter(r => r.status === 'Completed').length > 0 && (
+                                        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                            <p className="text-xs font-bold text-blue-800 mb-2 flex items-center gap-1">
+                                                <FileText className="w-3.5 h-3.5" /> Feedback dari Reviewer
+                                            </p>
+                                            <div className="space-y-3">
+                                                {proposal.reviews.filter(r => r.status === 'Completed').map((review, idx) => (
+                                                    <div key={idx} className="pb-3 border-b border-blue-100 last:border-0 last:pb-0">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="text-xs font-bold text-blue-900">{review.reviewer?.name || 'Reviewer'}</span>
+                                                            {review.recommendation && (
+                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700">
+                                                                    {review.recommendation}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {review.feedback && (
+                                                            <p className="text-sm text-blue-700 whitespace-pre-line">{review.feedback}</p>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
 

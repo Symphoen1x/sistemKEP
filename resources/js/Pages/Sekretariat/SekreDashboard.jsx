@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import { 
     Layers, 
@@ -7,31 +7,12 @@ import {
     Clock, 
     CheckCircle,
     Calendar,
-    Activity,
-    UserCheck,
-    ThumbsUp,
-    ThumbsDown
+    Activity
 } from 'lucide-react';
 
-export default function SekreDashboard({ stats, activities = [], schedules = [], pendingUsers = [] }) {
+export default function SekreDashboard({ stats, activities = [], schedules = [] }) {
     const { auth } = usePage().props;
     const user = auth.user;
-
-    const handleUserApprove = (userId) => {
-        if (confirm('Apakah Anda yakin menyetujui akun pengguna ini?')) {
-            router.post(route('sekretariat.users.approve', userId), { role: 'Applicant' }, {
-                onSuccess: () => alert('Pengguna berhasil disetujui sebagai Applicant.'),
-            });
-        }
-    };
-
-    const handleUserReject = (userId) => {
-        if (confirm('Apakah Anda yakin menolak akun pengguna ini?')) {
-            router.post(route('sekretariat.users.reject', userId), {}, {
-                onSuccess: () => alert('Pengguna berhasil ditolak.'),
-            });
-        }
-    };
 
     return (
         <div className="flex min-h-screen bg-gray-50 text-gray-800">
@@ -76,48 +57,6 @@ export default function SekreDashboard({ stats, activities = [], schedules = [],
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Left/Middle Column: Activities & Pending Registration */}
                         <div className="lg:col-span-2 space-y-8">
-                            {/* Pending User Registration Verification */}
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
-                                <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                                    <UserCheck className="w-5 h-5 text-blue-600" />
-                                    <span>Persetujuan Akun Peneliti Baru</span>
-                                </h3>
-                                <div className="space-y-4">
-                                    {pendingUsers.length > 0 ? (
-                                        pendingUsers.map((pUser) => (
-                                            <div key={pUser.id} className="p-4 border border-gray-100 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                                <div className="space-y-1">
-                                                    <p className="text-sm font-bold text-gray-900">{pUser.name}</p>
-                                                    <p className="text-xs text-gray-500 font-medium">
-                                                        Email: {pUser.email} | HP: {pUser.phone_number || '-'}
-                                                    </p>
-                                                </div>
-                                                <div className="flex items-center gap-2 self-stretch md:self-auto justify-end">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleUserReject(pUser.id)}
-                                                        className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold transition-all flex items-center gap-1 border border-red-200/50"
-                                                    >
-                                                        <ThumbsDown className="w-3.5 h-3.5" />
-                                                        <span>Tolak</span>
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleUserApprove(pUser.id)}
-                                                        className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm shadow-green-500/10"
-                                                    >
-                                                        <ThumbsUp className="w-3.5 h-3.5" />
-                                                        <span>Setujui</span>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-xs text-gray-400 font-medium italic">Tidak ada pendaftar baru yang menunggu persetujuan.</p>
-                                    )}
-                                </div>
-                            </div>
-
                             {/* Recent Activities Feed */}
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
                                 <h3 className="font-bold text-gray-900 flex items-center gap-2">

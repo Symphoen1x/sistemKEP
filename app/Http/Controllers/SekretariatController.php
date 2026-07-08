@@ -24,7 +24,6 @@ class SekretariatController extends Controller
     public function dashboard()
     {
         $proposals = Protokol::where('sekretariat_id', Auth::id())->get();
-        $pendingUsers = User::where('status', 'pending')->orderBy('created_at', 'desc')->get();
         $schedules = JadwalRapat::orderBy('tanggal', 'asc')->get();
 
         // Calculate statistics
@@ -78,7 +77,6 @@ class SekretariatController extends Controller
             'stats' => $stats,
             'activities' => $activities,
             'schedules' => $schedules,
-            'pendingUsers' => $pendingUsers,
         ]);
     }
 
@@ -144,12 +142,49 @@ class SekretariatController extends Controller
         ]);
     }
 
+    public function downloadDocument($id, $type)
+    {
+        $protokol = Protokol::findOrFail($id);
+
+        $fieldMap = [
+            'proposal'  => 'proposal_path',
+            'consent'   => 'informed_consent_path',
+            'izin'      => 'surat_izin_path',
+            'formulir'  => 'formulir_pengajuan_path',
+            'ringkasan' => 'ringkasan_protokol_path',
+            'instrumen' => 'instrumen_path',
+            'sertifikat'=> 'sertifikat_path',
+        ];
+
+        if (!isset($fieldMap[$type])) {
+            abort(404, 'Tipe dokumen tidak valid.');
+        }
+
+        $filePath = $protokol->{$fieldMap[$type]};
+
+        if (!$filePath) {
+            abort(404, 'Dokumen tidak ditemukan.');
+        }
+
+        // Strip the /storage/ prefix to get the path relative to the public disk
+        $relativePath = str_replace('/storage/', '', $filePath);
+
+        if (!Storage::disk('public')->exists($relativePath)) {
+            abort(404, 'File tidak ditemukan di penyimpanan.');
+        }
+
+        $extension = pathinfo($relativePath, PATHINFO_EXTENSION);
+        $filename = $type . '_' . ($protokol->nomor_pengajuan ?? 'protokol') . '.' . $extension;
+
+        return Storage::disk('public')->download($relativePath, $filename);
+    }
+
     public function reviewer()
     {
         // Get all users who have the role "Reviewer"
         $reviewers = User::role('Reviewer')->get();
         $proposals = Protokol::where('sekretariat_id', Auth::id())
-            ->with('reviewer:id,name')
+            ->with(['reviewer:id,name', 'reviews.reviewer'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($p) {
@@ -164,7 +199,18 @@ class SekretariatController extends Controller
                     'reviewer'        => $p->reviewer ? ['id' => $p->reviewer->id, 'name' => $p->reviewer->name] : null,
                     'due_date'        => $p->due_date,
                     'review_type'     => $p->review_type,
+                    'catatan_revisi'  => $p->catatan_revisi,
                     'is_overdue'      => $p->due_date && Carbon::parse($p->due_date)->isPast() && $p->status === 'Direview',
+                    'reviews'         => $p->reviews->map(function ($r) {
+                        return [
+                            'id'             => $r->id,
+                            'reviewer_name'  => $r->reviewer ? $r->reviewer->name : 'Reviewer',
+                            'recommendation' => $r->recommendation,
+                            'feedback'       => $r->feedback,
+                            'status'         => $r->status,
+                            'submitted_at'   => $r->submitted_at,
+                        ];
+                    }),
                 ];
             });
 

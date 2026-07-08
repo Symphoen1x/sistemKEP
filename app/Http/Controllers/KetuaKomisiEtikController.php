@@ -166,7 +166,7 @@ class KetuaKomisiEtikController extends Controller
 
     public function showDecisionForm($id)
     {
-        $proposal = Protokol::with('reviews')->findOrFail($id);
+        $proposal = Protokol::with('reviews.reviewer')->findOrFail($id);
         $reviews = $proposal->reviews;
 
         return Inertia::render('KetuaKomisiEtik/FormKeputusan', [

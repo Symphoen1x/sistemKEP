@@ -3,6 +3,7 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import Badge, { statusVariant, roleVariant } from '@/Components/Badge';
 import ConfirmModal from '@/Components/ConfirmModal';
+import { Lock } from 'lucide-react';
 
 /**
  * PB10 + PB11 — Admin: Detail pengguna, kelola peran, dan toggle status aktif/nonaktif.
@@ -40,6 +41,20 @@ export default function Show({ user, availableRoles }) {
     const handleRemoveRole = (role) => {
         router.patch(route('admin.users.roles', user.id), { action: 'remove', role }, {
             preserveScroll: true,
+        });
+    };
+
+    // --- Ubah Kata Sandi ---
+    const passwordForm = useForm({
+        password: '',
+        password_confirmation: '',
+    });
+
+    const handlePasswordSubmit = (e) => {
+        e.preventDefault();
+        passwordForm.patch(route('admin.users.password', user.id), {
+            preserveScroll: true,
+            onSuccess: () => passwordForm.reset(),
         });
     };
 
@@ -247,6 +262,63 @@ export default function Show({ user, availableRoles }) {
                                 )}
                             </button>
                         </div>
+                    </div>
+
+                    {/* ── Card: Ubah Kata Sandi ── */}
+                    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                        <div className="border-b border-gray-100 px-6 py-4 dark:border-gray-700">
+                            <h3 className="font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+                                <Lock className="w-5 h-5 text-gray-400" />
+                                Ubah Kata Sandi
+                            </h3>
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Setel kata sandi baru untuk pengguna ini.</p>
+                        </div>
+                        <form onSubmit={handlePasswordSubmit} className="px-6 py-5 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                    Kata Sandi Baru
+                                </label>
+                                <input
+                                    type="password"
+                                    value={passwordForm.data.password}
+                                    onChange={(e) => passwordForm.setData('password', e.target.value)}
+                                    className="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                                    placeholder="Minimal 8 karakter"
+                                    autoComplete="new-password"
+                                    required
+                                />
+                                {passwordForm.errors.password && (
+                                    <p className="text-red-500 text-xs mt-1">{passwordForm.errors.password}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                    Konfirmasi Kata Sandi
+                                </label>
+                                <input
+                                    type="password"
+                                    value={passwordForm.data.password_confirmation}
+                                    onChange={(e) => passwordForm.setData('password_confirmation', e.target.value)}
+                                    className="w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                                    placeholder="Ulangi kata sandi"
+                                    autoComplete="new-password"
+                                    required
+                                />
+                                {passwordForm.errors.password_confirmation && (
+                                    <p className="text-red-500 text-xs mt-1">{passwordForm.errors.password_confirmation}</p>
+                                )}
+                            </div>
+                            <div className="flex justify-end">
+                                <button
+                                    type="submit"
+                                    disabled={passwordForm.processing || !passwordForm.data.password}
+                                    className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <Lock className="w-4 h-4" />
+                                    {passwordForm.processing ? 'Menyimpan...' : 'Ubah Kata Sandi'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
 
                 </div>

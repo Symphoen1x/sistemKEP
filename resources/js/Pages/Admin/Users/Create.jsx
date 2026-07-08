@@ -3,6 +3,7 @@ import Sidebar from '@/Components/Sidebar';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
+import { Lock } from 'lucide-react';
 
 /**
  * PB09 — Admin: Form pembuatan akun internal (Sekretariat / Reviewer / Ketua Komisi Etik).
@@ -12,6 +13,8 @@ export default function Create() {
     const { data, setData, post, processing, errors } = useForm({
         name:         '',
         email:        '',
+        password:         '',
+        password_confirmation: '',
         role:         '',
         phone_number: '',
         address:      '',
@@ -57,7 +60,7 @@ export default function Create() {
                         {/* Header card */}
                         <div className="border-b border-gray-100 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-700/50">
                             <p className="text-sm text-gray-600 dark:text-gray-300">
-                                Akun yang dibuat di sini berstatus <strong>langsung aktif</strong>. Password sementara akan dikirim secara otomatis ke email yang diisi.
+                                Akun yang dibuat di sini berstatus <strong>langsung aktif</strong>. Kata sandi yang Anda tentukan akan dikirim ke email pengguna.
                             </p>
                         </div>
 
@@ -99,6 +102,44 @@ export default function Create() {
                                         required
                                     />
                                     <InputError message={errors.email} className="mt-1" />
+                                </div>
+                            </div>
+
+                            {/* Keamanan */}
+                            <div className="px-6 py-5 space-y-4">
+                                <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 flex items-center gap-2">
+                                    <Lock className="w-4 h-4" />
+                                    Keamanan
+                                </h3>
+
+                                <div>
+                                    <InputLabel htmlFor="password" value="Kata Sandi *" />
+                                    <TextInput
+                                        id="password"
+                                        type="password"
+                                        value={data.password}
+                                        onChange={(e) => setData('password', e.target.value)}
+                                        className="mt-1 block w-full"
+                                        placeholder="Minimal 8 karakter"
+                                        autoComplete="new-password"
+                                        required
+                                    />
+                                    <InputError message={errors.password} className="mt-1" />
+                                </div>
+
+                                <div>
+                                    <InputLabel htmlFor="password_confirmation" value="Konfirmasi Kata Sandi *" />
+                                    <TextInput
+                                        id="password_confirmation"
+                                        type="password"
+                                        value={data.password_confirmation}
+                                        onChange={(e) => setData('password_confirmation', e.target.value)}
+                                        className="mt-1 block w-full"
+                                        placeholder="Ulangi kata sandi"
+                                        autoComplete="new-password"
+                                        required
+                                    />
+                                    <InputError message={errors.password_confirmation} className="mt-1" />
                                 </div>
                             </div>
 
@@ -187,7 +228,7 @@ export default function Create() {
                                 <button
                                     id="btn-submit-create-user"
                                     type="submit"
-                                    disabled={processing || !data.role}
+                                    disabled={processing || !data.role || !data.password}
                                     className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                 >
                                     {processing && (

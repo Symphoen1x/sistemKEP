@@ -4,7 +4,6 @@ import {
     FileText,
     History,
     FolderOpen,
-    MessageSquare,
     User,
     HelpCircle,
     LogOut,
@@ -18,7 +17,6 @@ import {
     UserPlus,
     CheckSquare,
     FileSignature,
-    Bell,
     Settings,
     ClipboardList,
     ShieldOff,
@@ -27,7 +25,7 @@ import {
 } from 'lucide-react';
 
 export default function Sidebar() {
-    const { auth, notifications_count } = usePage().props;
+    const { auth } = usePage().props;
     const activeRole = auth?.active_role || 'Applicant';
 
     const isActive = (routeName) => {
@@ -56,6 +54,11 @@ export default function Sidebar() {
                     route: 'admin.users.create',
                 },
                 {
+                    label: 'Verifikasi Pendaftar',
+                    icon: UserCheck,
+                    route: 'admin.users.pending',
+                },
+                {
                     label: 'Alur Proposal',
                     icon: FileText,
                     route: 'admin.proposals.index',
@@ -71,11 +74,6 @@ export default function Sidebar() {
                     route: 'admin.config.index',
                 },
                 {
-                    label: 'Laporan & Statistik',
-                    icon: TrendingUp,
-                    route: 'admin.laporan',
-                },
-                {
                     label: 'Audit Log',
                     icon: ClipboardList,
                     route: 'admin.audit-log.index',
@@ -89,11 +87,6 @@ export default function Sidebar() {
                     route: 'sekretariat.dashboard',
                 },
                 {
-                    label: 'Verifikasi Pendaftar',
-                    icon: UserCheck,
-                    route: 'sekretariat.users.pending',
-                },
-                {
                     label: 'Verifikasi Pengajuan',
                     icon: ClipboardCheck,
                     route: 'sekretariat.verifikasi',
@@ -102,11 +95,6 @@ export default function Sidebar() {
                     label: 'Penugasan Reviewer',
                     icon: ShieldCheck,
                     route: 'sekretariat.reviewer',
-                },
-                {
-                    label: 'Pengambilan Keputusan',
-                    icon: CheckSquare,
-                    route: 'sekretariat.pengambilanKeputusan',
                 },
                 {
                     label: 'Review Amendment',
@@ -132,11 +120,6 @@ export default function Sidebar() {
                     label: 'Manajemen Dokumen',
                     icon: FolderOpen,
                     route: 'sekretariat.dokumen',
-                },
-                {
-                    label: 'Laporan & Statistik',
-                    icon: TrendingUp,
-                    route: 'sekretariat.laporan',
                 },
                 {
                     label: 'Profil Akun',
@@ -200,11 +183,6 @@ export default function Sidebar() {
                     route: 'ketua.terminations.eskalasi',
                 },
                 {
-                    label: 'Laporan & Statistik',
-                    icon: TrendingUp,
-                    route: 'ketua.laporan',
-                },
-                {
                     label: 'Profil Akun',
                     icon: User,
                     route: 'ketua.profil',
@@ -232,11 +210,6 @@ export default function Sidebar() {
                     label: 'Unduh Dokumen',
                     icon: FolderOpen,
                     route: 'applicant.dokumen',
-                },
-                {
-                    label: 'Pesan & Notifikasi',
-                    icon: MessageSquare,
-                    route: 'applicant.pesan',
                 },
                 {
                     label: 'Profil Akun',
@@ -289,16 +262,6 @@ export default function Sidebar() {
 
             {/* Footer / Logout */}
             <div className="p-4 border-t border-slate-800 space-y-1">
-                {/* Bell icon notifikasi */}
-                {notifications_count > 0 && (
-                    <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-blue-600/10 text-blue-400 text-xs font-semibold">
-                        <Bell className="w-4 h-4 flex-shrink-0" />
-                        <span>{notifications_count} notifikasi baru</span>
-                        <span className="ml-auto bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                            {notifications_count}
-                        </span>
-                    </div>
-                )}
                 <Link
                     href={route('logout')}
                     method="post"

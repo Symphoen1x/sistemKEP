@@ -73,7 +73,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/riwayat', [ApplicantController::class, 'riwayat'])->name('riwayat');
         Route::get('/dokumen', [ApplicantController::class, 'dokumen'])->name('dokumen');
         Route::get('/dokumen/{id}/download-sertifikat', [ApplicantController::class, 'downloadSertifikat'])->name('downloadSertifikat');
-        Route::get('/pesan', [ApplicantController::class, 'pesan'])->name('pesan');
         Route::get('/profil', [ApplicantController::class, 'profil'])->name('profil');
         Route::post('/profil', [ApplicantController::class, 'updateProfil'])->name('profil.update');
         Route::get('/bantuan', [ApplicantController::class, 'bantuan'])->name('bantuan');
@@ -93,17 +92,13 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:Sekretariat')->prefix('sekretariat')->name('sekretariat.')->group(function () {
         Route::get('/dashboard', [SekretariatController::class, 'dashboard'])->name('dashboard');
         
-        // Verifikasi & Kelola pendaftaran akun
-        Route::get('/pending-users', [UserApprovalController::class, 'index'])->name('users.pending');
-        Route::post('/users/{user}/approve', [UserApprovalController::class, 'approve'])->name('users.approve');
-        Route::post('/users/{user}/reject', [UserApprovalController::class, 'reject'])->name('users.reject');
-        
         // Verifikasi Usulan Protokol
         Route::get('/verifikasi', [SekretariatController::class, 'verifikasi'])->name('verifikasi');
         Route::post('/verifikasi/{id}/aksi', [SekretariatController::class, 'verifikasiAksi'])->name('verifikasi.aksi');
         
         // Dokumen & Unduhan
         Route::get('/dokumen', [SekretariatController::class, 'dokumen'])->name('dokumen');
+        Route::get('/dokumen/{id}/download/{type}', [SekretariatController::class, 'downloadDocument'])->name('dokumen.download');
         
         // Penunjukan Reviewer
         Route::get('/reviewer', [SekretariatController::class, 'reviewer'])->name('reviewer');
@@ -127,22 +122,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/evaluasi/{id}/classify', [SekretariatController::class, 'classifyReview'])->name('classifyReview');
         Route::post('/evaluasi/{id}/assign', [SekretariatController::class, 'assignReviewers'])->name('assignReviewers');
         Route::post('/evaluasi/{id}/due-date', [SekretariatController::class, 'setDueDate'])->name('setDueDate');
-        
-        // EPIC 7: Keputusan & Post-Decision
-        Route::get('/pengambilan-keputusan', [SekretariatController::class, 'getProposalsForDecision'])->name('pengambilanKeputusan');
-        Route::get('/keputusan/{id}', [SekretariatController::class, 'showDecisionForm'])->name('showDecisionForm');
-        Route::post('/keputusan/{id}', [SekretariatController::class, 'makeDecision'])->name('makeDecision');
-        Route::post('/keputusan/{id}/sertifikat', [SekretariatController::class, 'generateCertificate'])->name('generateCertificate');
-        Route::post('/keputusan/{id}/notifikasi', [SekretariatController::class, 'sendNotification'])->name('sendNotification');
 
         // PB35 — Disapproved (separate form)
         Route::get('/keputusan/{id}/disapprove', [SekretariatController::class, 'showDisapproveForm'])->name('showDisapproveForm');
         Route::post('/keputusan/{id}/disapprove', [SekretariatController::class, 'disapproveProposal'])->name('disapproveProposal');
         
-        // Laporan & Profil
-        Route::get('/laporan', [\App\Http\Controllers\ReportController::class, 'index'])->name('laporan');
-        Route::get('/laporan/export-pdf', [\App\Http\Controllers\ReportController::class, 'exportPdf'])->name('laporan.exportPdf');
-        Route::get('/laporan/export-csv', [\App\Http\Controllers\ReportController::class, 'exportCsv'])->name('laporan.exportCsv');
+        // Profil
         Route::get('/profil', [SekretariatController::class, 'profil'])->name('profil');
         Route::post('/profil', [SekretariatController::class, 'updateProfil'])->name('profil.update');
 
@@ -170,6 +155,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/users/{user}', [UserManagementController::class, 'show'])->name('users.show');
         Route::patch('/users/{user}/roles', [UserManagementController::class, 'updateRoles'])->name('users.roles');
         Route::patch('/users/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::patch('/users/{user}/password', [UserManagementController::class, 'updatePassword'])->name('users.password');
+
+        // Verifikasi & Kelola pendaftaran akun baru
+        Route::get('/pending-users', [UserApprovalController::class, 'index'])->name('users.pending');
+        Route::post('/users/{user}/approve', [UserApprovalController::class, 'approve'])->name('users.approve');
+        Route::post('/users/{user}/reject', [UserApprovalController::class, 'reject'])->name('users.reject');
 
         // Proposals routing & assignment
         Route::get('/proposals', [\App\Http\Controllers\Admin\AdminProposalController::class, 'index'])->name('proposals.index');
@@ -185,11 +176,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/templates/{template}', [\App\Http\Controllers\Admin\TemplateController::class, 'update'])->name('templates.update');
         Route::patch('/templates/{template}/toggle', [\App\Http\Controllers\Admin\TemplateController::class, 'toggleActive'])->name('templates.toggle');
 
-        // Epic 13 — Laporan & Statistik
-        Route::get('/laporan', [\App\Http\Controllers\ReportController::class, 'index'])->name('laporan');
-        Route::get('/laporan/export-pdf', [\App\Http\Controllers\ReportController::class, 'exportPdf'])->name('laporan.exportPdf');
-        Route::get('/laporan/export-csv', [\App\Http\Controllers\ReportController::class, 'exportCsv'])->name('laporan.exportCsv');
-
         // Epic 14 — Audit Log
         Route::get('/audit-log', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-log.index');
     });
@@ -202,6 +188,8 @@ Route::middleware('auth')->group(function () {
         // EPIC 6: Review EC
         Route::get('/assigned', [ReviewerController::class, 'getAssignedProposals'])->name('assigned');
         Route::get('/proposals/{id}/view', [ReviewerController::class, 'viewProposal'])->name('viewProposal');
+        Route::get('/proposals/{id}/download/{type}', [ReviewerController::class, 'downloadDocument'])->name('download');
+        Route::get('/versions/{versionId}/download', [ReviewerController::class, 'downloadVersion'])->name('downloadVersion');
         Route::get('/proposals/{id}/form', [ReviewerController::class, 'showReviewForm'])->name('showReviewForm');
         Route::get('/proposals/{id}/review', [ReviewerController::class, 'review'])->name('review');
         Route::post('/proposals/{id}/submit', [ReviewerController::class, 'submitReview'])->name('submitReview');
@@ -241,10 +229,6 @@ Route::middleware('auth')->group(function () {
         // Epic 8 — Amendment (Ketua view)
         Route::get('/amendments', [AmendmentController::class, 'myAmendments'])->name('amendments.mine');
 
-        // Epic 13 — Laporan & Statistik
-        Route::get('/laporan', [\App\Http\Controllers\ReportController::class, 'index'])->name('laporan');
-        Route::get('/laporan/export-pdf', [\App\Http\Controllers\ReportController::class, 'exportPdf'])->name('laporan.exportPdf');
-        Route::get('/laporan/export-csv', [\App\Http\Controllers\ReportController::class, 'exportCsv'])->name('laporan.exportCsv');
     });
 
     // Epic 9 — Termination (Applicant)

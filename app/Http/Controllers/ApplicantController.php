@@ -67,7 +67,7 @@ class ApplicantController extends Controller
     {
         $user = Auth::user();
         $proposals = Protokol::where('user_id', $user->id)
-            ->with('decision') // untuk tampilkan feedback_applicant
+            ->with(['decision', 'reviews.reviewer']) // untuk tampilkan feedback_applicant & review
             ->orderBy('created_at', 'desc')
             ->get();
         
@@ -177,15 +177,6 @@ class ApplicantController extends Controller
         ]);
     }
 
-    public function pesan()
-    {
-        $user = Auth::user();
-        $messages = Message::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
-        return Inertia::render('Applicant/PesanNotifikasi', [
-            'messages' => $messages,
-        ]);
-    }
-
     public function profil()
     {
         return Inertia::render('Applicant/Profil');
@@ -221,7 +212,7 @@ class ApplicantController extends Controller
         $user = Auth::user();
         $proposal = Protokol::where('user_id', $user->id)
             ->whereIn('status', ['Revisi', 'AWR'])
-            ->with('decision')
+            ->with(['decision', 'reviews.reviewer'])
             ->findOrFail($id);
 
         return Inertia::render('Applicant/UploadRevisi', [
@@ -244,7 +235,10 @@ class ApplicantController extends Controller
             'catatan_revisi_applicant' => 'nullable|string|max:1000',
         ]);
 
-        $updateData = ['status' => 'Direvisi'];
+        $updateData = [
+            'status' => 'Direvisi',
+            'review_status' => 'Reviewing',
+        ];
 
         // Version-tracked file uploads with organized structure
         if ($request->hasFile('proposal')) {
@@ -262,6 +256,24 @@ class ApplicantController extends Controller
 
         $proposal->update($updateData);
 
+        $reviewsToReset = $proposal->reviews()
+            ->where('status', 'Completed')
+            ->where('recommendation', 'Conditionally Approved')
+            ->get();
+        foreach ($reviewsToReset as $rev) {
+            $rev->update([
+                'status' => 'Assigned',
+                'recommendation' => null,
+                'submitted_at' => null,
+            ]);
+            Message::create([
+                'user_id'     => $rev->reviewer_id,
+                'sender_name' => 'Sistem KEP',
+                'subject'     => "Revisi Diunggah: {$proposal->nomor_pengajuan}",
+                'body'        => "Peneliti {$proposal->peneliti} telah mengunggah dokumen revisi untuk proposal \"{$proposal->judul}\". Silakan lakukan review kembali.",
+            ]);
+        }
+
         // Notifikasi ke Sekretariat
         $sekretariats = User::role('Sekretariat')->get();
         foreach ($sekretariats as $sekre) {
@@ -274,7 +286,7 @@ class ApplicantController extends Controller
         }
 
         return redirect()->route('applicant.trackStatus')
-            ->with('status', 'Revisi berhasil dikirim. Sekretariat akan memverifikasi kembali.');
+            ->with('status', 'Revisi berhasil dikirim. Reviewer akan meninjau kembali proposal Anda.');
     }
 
     /**
